@@ -6,7 +6,7 @@
   <link href="https://codeman.club/atom.xml" rel="self"/>
   
   <link href="https://codeman.club/"/>
-  <updated>2022-09-24T07:29:37.638Z</updated>
+  <updated>2022-09-24T15:35:15.751Z</updated>
   <id>https://codeman.club/</id>
   
   <author>
@@ -15,6 +15,27 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>PHP-编译安装扩展</title>
+    <link href="https://codeman.club/php/php_extension/"/>
+    <id>https://codeman.club/php/php_extension/</id>
+    <published>2022-09-24T15:24:21.000Z</published>
+    <updated>2022-09-24T15:35:15.751Z</updated>
+    
+    <content type="html"><![CDATA[<h4 id="安装示例"><a href="#安装示例" class="headerlink" title="安装示例"></a>安装示例</h4><h5 id="一、执行phpize"><a href="#一、执行phpize" class="headerlink" title="一、执行phpize"></a>一、执行phpize</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">进入php7.4的源码包中gd扩展的目录</span></span><br><span class="line">cd /usr/local/src/php-7.4.28/ext/gd</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">执行phpize</span></span><br><span class="line">/usr/local/php/php74/bin/phpize</span><br></pre></td></tr></table></figure><span id="more"></span><h5 id="二、此编译成功后会生成configure可执行文件："><a href="#二、此编译成功后会生成configure可执行文件：" class="headerlink" title="二、此编译成功后会生成configure可执行文件："></a>二、此编译成功后会生成configure可执行文件：</h5><p><img src="/load_images/php_extension1.png" alt="img"></p><p><img src="/load_images/php_extension2.png" alt="img"></p><h5 id="三、然后执行："><a href="#三、然后执行：" class="headerlink" title="三、然后执行："></a>三、然后执行：</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./configure --with-php-config=/usr/local/php/php74/bin/php-config</span><br></pre></td></tr></table></figure><p><img src="/load_images/php_extension3.png" alt="imag"></p><h5 id="四、编译成功后会生成对应的Makefile："><a href="#四、编译成功后会生成对应的Makefile：" class="headerlink" title="四、编译成功后会生成对应的Makefile："></a>四、编译成功后会生成对应的Makefile：</h5><p><img src="/load_images/php_extension4.png" alt="img"></p><h5 id="五、make-amp-amp-make-install"><a href="#五、make-amp-amp-make-install" class="headerlink" title="五、make &amp;&amp; make install"></a>五、make &amp;&amp; make install</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make &amp;&amp; make install</span><br></pre></td></tr></table></figure><h5 id="六、修改php-ini"><a href="#六、修改php-ini" class="headerlink" title="六、修改php.ini"></a>六、修改php.ini</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;extension=\&quot;gd.so\&quot;&quot; &gt;&gt; /usr/local/php/php74/etc/php.ini</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">之后重启PHP</span></span><br><span class="line"></span><br><span class="line">php74 -m</span><br></pre></td></tr></table></figure><p>需要注意的是，如果在安装php的时候，指定了–enable-gd，那么再使用编译安装gd，就会出现以下报错：</p><p><img src="/load_images/php_extension5.png" alt="img"></p><p>原因是：再php4.3版本之后，编译过程中使用–enable-gd后，表示gd已经编译过了，不能在使用以上方法进行重复编译</p>]]></content>
+    
+    
+    <summary type="html">&lt;h4 id=&quot;安装示例&quot;&gt;&lt;a href=&quot;#安装示例&quot; class=&quot;headerlink&quot; title=&quot;安装示例&quot;&gt;&lt;/a&gt;安装示例&lt;/h4&gt;&lt;h5 id=&quot;一、执行phpize&quot;&gt;&lt;a href=&quot;#一、执行phpize&quot; class=&quot;headerlink&quot; title=&quot;一、执行phpize&quot;&gt;&lt;/a&gt;一、执行phpize&lt;/h5&gt;&lt;figure class=&quot;highlight shell&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;1&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;2&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;3&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;4&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;meta prompt_&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;language-bash&quot;&gt;进入php7.4的源码包中gd扩展的目录&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;cd /usr/local/src/php-7.4.28/ext/gd&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;&lt;span class=&quot;meta prompt_&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;language-bash&quot;&gt;执行phpize&lt;/span&gt;&lt;/span&gt;&lt;br&gt;&lt;span class=&quot;line&quot;&gt;/usr/local/php/php74/bin/phpize&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;</summary>
+    
+    
+    
+    <category term="PHP" scheme="https://codeman.club/categories/PHP/"/>
+    
+    
+    <category term="PHP" scheme="https://codeman.club/tags/PHP/"/>
+    
+  </entry>
   
   <entry>
     <title>多版本PECL安装及使用</title>
