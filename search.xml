@@ -8,45 +8,6 @@
 ]]></content>
   </entry>
   <entry>
-    <title>MySQL InnoDB MVCC机制的原理及实现</title>
-    <url>/mysql/mvcc/</url>
-    <content><![CDATA[<p>MVCC（Multiversion Concurrency Control）多版本并发控制，通过一种可见性算法来实现数据库并发控制。</p>
-<span id="more"></span>
-
-<h4 id="两种读形式"><a href="#两种读形式" class="headerlink" title="两种读形式"></a>两种读形式</h4><ul>
-<li>快照读：读取的是当前事务的课件版本，不用加锁（简单的select就是快照读）</li>
-<li>当前读：读取的是当前版本，例如更新、插入、删除操作以及特殊的读操作</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">update table set ...</span><br><span class="line">insert into table ...</span><br><span class="line">delete from table where ...</span><br><span class="line"></span><br><span class="line">/*特殊的读操作*/</span><br><span class="line">select * from table where ... lock in share mode;</span><br><span class="line">select * from table where ... for update;</span><br></pre></td></tr></table></figure>
-
-
-
-<h4 id="uodo-log-回滚日志"><a href="#uodo-log-回滚日志" class="headerlink" title="uodo log 回滚日志"></a>uodo log 回滚日志</h4><p>undo log是可见性算法的非常重要部分，分为两类</p>
-<ul>
-<li>insert undo log：事务在插入新纪录产生的undo log，当事务提交后可以直接丢弃</li>
-<li>update undo log：事务在进行update或delete的时候产生的undo log，在快照读的时候还是需要的，所以不能直接删除，只有当系统没有比这个log更早的read view的时候才能删除。所以长事务会产生很多老的视图导致undo log无法删除，占用大量存储空间。</li>
-</ul>
-<h4 id="read-view-读视图"><a href="#read-view-读视图" class="headerlink" title="read view 读视图"></a>read view 读视图</h4><p>读视图，是MySQL秒级创建视图的必要条件，比如一个事务在进行select操作（快照读）的时候会创建一个read view，这个read view其实只是三个字段：</p>
-<ul>
-<li>active_trx_id：read view生成时刻系统中正在活跃的事务ID</li>
-<li>up_limit_id：active_trx_id中最小的事务ID</li>
-<li>low_limit_id：active_trx_id中最大事务ID+1</li>
-</ul>
-<h4 id="可见性算法"><a href="#可见性算法" class="headerlink" title="可见性算法"></a>可见性算法</h4><p> 主要思路：当生成read-view的时候如何去拿获取的行记录中的 DB_TRX_ID 去和 read-view 中的三个属性(上面讲了)去作比较：</p>
-<ul>
-<li>首先比较这条记录的 DB_TRX_ID 是否是 小于 up_limit_id 或者 等于当前事务id。如果满足，那么说明当前事务能看到这条记录。如果大于则进入下一轮判断</li>
-<li>然后判断这条记录的 DB_TRX_ID 是否 大于等于 low_limit_id。如果大于等于则说明此事务无法看见该条记录，不然就进入下一轮判断。</li>
-<li>判断该条记录的 DB_TRX_ID 是否在活跃事务的数组中，如果在则说明这条记录还未提交对于当前操作的事务是不可见的，如果不在则说明已经提交，那么就是可见的</li>
-</ul>
-]]></content>
-      <categories>
-        <category>MySQL</category>
-      </categories>
-      <tags>
-        <tag>MySQL</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>多版本PECL安装及使用</title>
     <url>/php/pecl_multi_version/</url>
     <content><![CDATA[<p><a href="https://pear.php.net/manual/en/installation.getting.php">官方文档</a></p>
@@ -116,6 +77,45 @@
       </categories>
       <tags>
         <tag>PHP</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>MySQL InnoDB MVCC机制的原理及实现</title>
+    <url>/mysql/mvcc/</url>
+    <content><![CDATA[<p>MVCC（Multiversion Concurrency Control）多版本并发控制，通过一种可见性算法来实现数据库并发控制。</p>
+<span id="more"></span>
+
+<h4 id="两种读形式"><a href="#两种读形式" class="headerlink" title="两种读形式"></a>两种读形式</h4><ul>
+<li>快照读：读取的是当前事务的课件版本，不用加锁（简单的select就是快照读）</li>
+<li>当前读：读取的是当前版本，例如更新、插入、删除操作以及特殊的读操作</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">update table set ...</span><br><span class="line">insert into table ...</span><br><span class="line">delete from table where ...</span><br><span class="line"></span><br><span class="line">/*特殊的读操作*/</span><br><span class="line">select * from table where ... lock in share mode;</span><br><span class="line">select * from table where ... for update;</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="uodo-log-回滚日志"><a href="#uodo-log-回滚日志" class="headerlink" title="uodo log 回滚日志"></a>uodo log 回滚日志</h4><p>undo log是可见性算法的非常重要部分，分为两类</p>
+<ul>
+<li>insert undo log：事务在插入新纪录产生的undo log，当事务提交后可以直接丢弃</li>
+<li>update undo log：事务在进行update或delete的时候产生的undo log，在快照读的时候还是需要的，所以不能直接删除，只有当系统没有比这个log更早的read view的时候才能删除。所以长事务会产生很多老的视图导致undo log无法删除，占用大量存储空间。</li>
+</ul>
+<h4 id="read-view-读视图"><a href="#read-view-读视图" class="headerlink" title="read view 读视图"></a>read view 读视图</h4><p>读视图，是MySQL秒级创建视图的必要条件，比如一个事务在进行select操作（快照读）的时候会创建一个read view，这个read view其实只是三个字段：</p>
+<ul>
+<li>active_trx_id：read view生成时刻系统中正在活跃的事务ID</li>
+<li>up_limit_id：active_trx_id中最小的事务ID</li>
+<li>low_limit_id：active_trx_id中最大事务ID+1</li>
+</ul>
+<h4 id="可见性算法"><a href="#可见性算法" class="headerlink" title="可见性算法"></a>可见性算法</h4><p> 主要思路：当生成read-view的时候如何去拿获取的行记录中的 DB_TRX_ID 去和 read-view 中的三个属性(上面讲了)去作比较：</p>
+<ul>
+<li>首先比较这条记录的 DB_TRX_ID 是否是 小于 up_limit_id 或者 等于当前事务id。如果满足，那么说明当前事务能看到这条记录。如果大于则进入下一轮判断</li>
+<li>然后判断这条记录的 DB_TRX_ID 是否 大于等于 low_limit_id。如果大于等于则说明此事务无法看见该条记录，不然就进入下一轮判断。</li>
+<li>判断该条记录的 DB_TRX_ID 是否在活跃事务的数组中，如果在则说明这条记录还未提交对于当前操作的事务是不可见的，如果不在则说明已经提交，那么就是可见的</li>
+</ul>
+]]></content>
+      <categories>
+        <category>MySQL</category>
+      </categories>
+      <tags>
+        <tag>MySQL</tag>
       </tags>
   </entry>
 </search>
