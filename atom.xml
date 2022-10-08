@@ -6,7 +6,7 @@
   <link href="https://codeman.club/atom.xml" rel="self"/>
   
   <link href="https://codeman.club/"/>
-  <updated>2022-09-28T06:30:35.287Z</updated>
+  <updated>2022-10-08T11:07:32.160Z</updated>
   <id>https://codeman.club/</id>
   
   <author>
@@ -21,16 +21,12 @@
     <link href="https://codeman.club/mail/mailhog/"/>
     <id>https://codeman.club/mail/mailhog/</id>
     <published>2022-09-28T06:26:18.000Z</published>
-    <updated>2022-09-28T06:30:35.287Z</updated>
+    <updated>2022-10-08T11:07:32.160Z</updated>
     
-    <content type="html"><![CDATA[<p><a href="https://github.com/mailhog/MailHog">MailHog</a></p><h5 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">brew update</span><br><span class="line">brew search mailhog</span><br><span class="line">brew install mailhog</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">运行</span></span><br><span class="line">mailhog</span><br></pre></td></tr></table></figure><p>the SMTP server starts on port 1025<br>the HTTP server starts on port 8025</p><h5 id="laravel-env文件配置"><a href="#laravel-env文件配置" class="headerlink" title="laravel .env文件配置"></a>laravel .env文件配置</h5><p><img src="/load_images/mailhog.png" alt="img"></p>]]></content>
+    <content type="html"><![CDATA[<p><a href="https://github.com/mailhog/MailHog">MailHog</a></p><span id="more"></span><h5 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">brew update</span><br><span class="line">brew search mailhog</span><br><span class="line">brew install mailhog</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">运行</span></span><br><span class="line">mailhog</span><br></pre></td></tr></table></figure><p>the SMTP server starts on port 1025<br>the HTTP server starts on port 8025</p><h5 id="laravel-env文件配置"><a href="#laravel-env文件配置" class="headerlink" title="laravel .env文件配置"></a>laravel .env文件配置</h5><p><img src="/load_images/mailhog.png" alt="img"></p>]]></content>
     
     
-      
-      
-    <summary type="html">&lt;p&gt;&lt;a href=&quot;https://github.com/mailhog/MailHog&quot;&gt;MailHog&lt;/a&gt;&lt;/p&gt;
-&lt;h5 id=&quot;安装&quot;&gt;&lt;a href=&quot;#安装&quot; class=&quot;headerlink&quot; title=&quot;安装&quot;&gt;&lt;/a&gt;安装&lt;/h5&gt;&lt;figure c</summary>
-      
+    <summary type="html">&lt;p&gt;&lt;a href=&quot;https://github.com/mailhog/MailHog&quot;&gt;MailHog&lt;/a&gt;&lt;/p&gt;</summary>
     
     
     
