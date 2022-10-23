@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"codeman.club","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="反向代理">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Nginx-反向代理">
+<meta property="og:url" content="https://codeman.club/nginx/reverse_proxy/index.html">
+<meta property="og:site_name" content="Coding-Nonfishz">
+<meta property="og:description" content="反向代理">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://codeman.club/load_images/nginx_reverse_proxy1.png">
+<meta property="og:image" content="https://codeman.club/load_images/nginx_reverse_proxy2.png">
+<meta property="og:image" content="https://codeman.club/load_images/nginx_reverse_proxy3.png">
+<meta property="og:image" content="https://codeman.club/load_images/nginx_reverse_proxy4.png">
+<meta property="og:image" content="https://codeman.club/load_images/nginx_reverse_proxy5.png">
+<meta property="og:image" content="https://codeman.club/load_images/nginx_reverse_proxy6.png">
+<meta property="og:image" content="https://codeman.club/load_images/nginx_reverse_proxy7.png">
+<meta property="article:published_time" content="2022-10-20T01:18:08.000Z">
+<meta property="article:modified_time" content="2022-10-22T11:05:01.095Z">
+<meta property="article:author" content="Nonfishz">
+<meta property="article:tag" content="Nginx">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://codeman.club/load_images/nginx_reverse_proxy1.png">
+
+<link rel="canonical" href="https://codeman.club/nginx/reverse_proxy/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Nginx-反向代理 | Coding-Nonfishz</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Coding-Nonfishz" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Coding-Nonfishz</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://codeman.club/nginx/reverse_proxy/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpeg">
+      <meta itemprop="name" content="Nonfishz">
+      <meta itemprop="description" content="It's time.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Coding-Nonfishz">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Nginx-反向代理
+        </h1>
+
+        <div class="post-meta">
+	  
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-10-20 09:18:08" itemprop="dateCreated datePublished" datetime="2022-10-20T09:18:08+08:00">2022-10-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-10-22 19:05:01" itemprop="dateModified" datetime="2022-10-22T19:05:01+08:00">2022-10-22</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Nginx/" itemprop="url" rel="index"><span itemprop="name">Nginx</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>9.9k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>9 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="反向代理"><a href="#反向代理" class="headerlink" title="反向代理"></a>反向代理</h3><span id="more"></span>
+
+<h4 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h4><ul>
+<li>反向代理介于用户和真实服务器之间，提供请求和响应的中转服务</li>
+<li>对于用户而言，反向代理服务器就是访问的真实服务器</li>
+<li>反向代理可以有效降低服务器的负载消耗，提升效率</li>
+</ul>
+<img src="/load_images/nginx_reverse_proxy1.png" alt="img" style="zoom: 33%;" />
+
+<h4 id="优势"><a href="#优势" class="headerlink" title="优势"></a>优势</h4><ul>
+<li>隐藏真实服务器</li>
+<li>便于横向扩充后端动态服务</li>
+<li>动静分离，提升系统健壮性</li>
+</ul>
+<h3 id="动静分离"><a href="#动静分离" class="headerlink" title="动静分离"></a>动静分离</h3><h4 id="定义-1"><a href="#定义-1" class="headerlink" title="定义"></a>定义</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">动静分离是指在web服务器架构中，将静态页面与动态页面或者静态内容接口和动态内容接口分开不同系统访问的架构设计方法，进而提升整个服务访问性能和可维护性</span><br></pre></td></tr></table></figure>
+
+<h4 id="Web资源分类"><a href="#Web资源分类" class="headerlink" title="Web资源分类"></a>Web资源分类</h4><img src="/load_images/nginx_reverse_proxy2.png" alt="img" style="zoom: 33%;" />
+
+<h4 id="Web请求图解"><a href="#Web请求图解" class="headerlink" title="Web请求图解"></a>Web请求图解</h4><p>静态请求Nginx本身可以处理（也可以单独做一个静态资源服务器专门处理静态请求），直接返回文件内容即可。动态请求可以打到动态资源服务器（也叫应用程序服务器）去处理，然后结果返回给Nginx，再返回给用户。</p>
+<img src="/load_images/nginx_reverse_proxy3.png" alt="img" style="zoom: 33%;" />
+
+<img src="/load_images/nginx_reverse_proxy4.png" alt="img" style="zoom:33%;" />
+
+<h3 id="支持的协议"><a href="#支持的协议" class="headerlink" title="支持的协议"></a>支持的协议</h3><p>使用Nginx作为反向代理时支持的协议</p>
+<img src="/load_images/nginx_reverse_proxy5.png" alt="img" style="zoom:33%;" />
+
+<h3 id="upstream模块"><a href="#upstream模块" class="headerlink" title="upstream模块"></a>upstream模块</h3><h4 id="用来定义上游服务的相关信息"><a href="#用来定义上游服务的相关信息" class="headerlink" title="用来定义上游服务的相关信息"></a>用来定义上游服务的相关信息</h4><img src="/load_images/nginx_reverse_proxy6.png" alt="img" style="zoom:33%;" />
+
+<ul>
+<li>默认被编译进Nginx，禁用须通过–without-http_upstream_module</li>
+</ul>
+<h4 id="指令"><a href="#指令" class="headerlink" title="指令"></a>指令</h4><table>
+<thead>
+<tr>
+<th>指令</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>upstream</td>
+<td>段名，以{}括起来，中间定义上游服务URL</td>
+</tr>
+<tr>
+<td>server</td>
+<td>定义上游服务地址</td>
+</tr>
+<tr>
+<td>zone</td>
+<td>定义共享内存，用于跨worker子进程</td>
+</tr>
+<tr>
+<td>keeplive</td>
+<td>对上游服务器启用长连接</td>
+</tr>
+<tr>
+<td>keeplive_requests</td>
+<td>一个长连接最多请求个数</td>
+</tr>
+<tr>
+<td>keepalive_time</td>
+<td>限制通过一个长连接处理请求的最长时间。到了这个时间后，在后续的请求处理之后关闭连接</td>
+</tr>
+<tr>
+<td>keeplive_timeout</td>
+<td>空闲情形下，一个长连接的超时时长</td>
+</tr>
+<tr>
+<td>hash</td>
+<td>哈希负载均衡算法</td>
+</tr>
+<tr>
+<td>ip_hash</td>
+<td>依据IP进行哈希计算的负载均衡算法</td>
+</tr>
+<tr>
+<td>least_conn</td>
+<td>最少连接数负载均衡算法</td>
+</tr>
+<tr>
+<td>least_time</td>
+<td>最短响应时间负载均衡算法</td>
+</tr>
+<tr>
+<td>random</td>
+<td>随机负载均衡算法</td>
+</tr>
+</tbody></table>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">upstream定义一组服务器</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">upstream name &#123; ... &#125;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值：无</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http</span></span><br><span class="line"></span><br><span class="line">server可以监听不同的端口</span><br><span class="line">监听TCP和UNIX域套接字的服务器可以混合使用</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">示例</span></span><br><span class="line">upstream backend &#123;</span><br><span class="line">    server backend1.example.com weight=5;</span><br><span class="line">    server 127.0.0.1:8080       max_fails=3 fail_timeout=30s;</span><br><span class="line">    server unix:/tmp/backend3;</span><br><span class="line"></span><br><span class="line">    server backup1.example.com  backup;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">说明</span></span><br><span class="line">默认情况下，请求使用加权循环平衡方法在服务器之间分配</span><br><span class="line">上述示例，每7个请求将按以下方式分发：第一个server分配5个，第二、第三个server各一个；</span><br><span class="line">如果在与服务器通信时发生错误，请求被传递到下一个服务器，依次类推，直到尝试所有正常运行的服务器</span><br><span class="line">如果无法从任何服务器获得成功响应，那么客户端将收到与最后一个backup服务器通信的结果</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">server语法</span></span><br><span class="line">server address [parameters];</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值：无</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：upstream</span></span><br><span class="line"></span><br><span class="line">address可以是IP、域名，也可以带上端口(默认80端口)，也可以是一个UNIX套接字路径</span><br><span class="line">解析为多个IP地址的域名一次定义多个服务器</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>parameters可选值</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>weight&#x3D;number</td>
+<td>权重值，默认为1</td>
+</tr>
+<tr>
+<td>max_conns&#x3D;number</td>
+<td>上游服务器的最大并发连接数</td>
+</tr>
+<tr>
+<td>fail_timeout&#x3D;time</td>
+<td>服务器不可用的判定时间</td>
+</tr>
+<tr>
+<td>max_fails&#x3D;number</td>
+<td>服务器不可用的检查次数</td>
+</tr>
+<tr>
+<td>backup</td>
+<td>备份服务器，仅当其他主服务器都不可用时，将被传递请求</td>
+</tr>
+<tr>
+<td>down</td>
+<td>标记服务器长期不可用，离线维护</td>
+</tr>
+<tr>
+<td>resolve</td>
+<td>监控服务器域名对应的IP地址变化，自动修改upstream配置，无需重启nginx；服务器组必须驻留在共享内存中</td>
+</tr>
+</tbody></table>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">keepalive：限制每个worker子进程与上游服务器空闲长连接的最大数量</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">keepalive connections;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值：无</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：upstream</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">简单示例</span></span><br><span class="line">keepalive 16;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">For HTTP</span></span><br><span class="line">upstream http_backend &#123;</span><br><span class="line">    server 127.0.0.1:8080;</span><br><span class="line"></span><br><span class="line">    keepalive 16;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">server &#123;</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    location /http/ &#123;</span><br><span class="line">        proxy_pass http://http_backend;</span><br><span class="line">        proxy_http_version 1.1; #proxy_http_version需要设置为1.1</span><br><span class="line">        proxy_set_header Connection &quot;&quot;; #proxy_set_header设置Connection为空</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">说明，如果不设置proxy_http_version为1.1，那么proxy_set_header需要设置Connection为Keep-Alive；不建议这么做</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">For FastCGI</span></span><br><span class="line">upstream fastcgi_backend &#123;</span><br><span class="line">    server 127.0.0.1:9000;</span><br><span class="line"></span><br><span class="line">    keepalive 8;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">server &#123;</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    location /fastcgi/ &#123;</span><br><span class="line">        fastcgi_pass fastcgi_backend;</span><br><span class="line">        fastcgi_keep_conn on; #需要设置fastcgi_keep_conn为on</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">关于负载均衡注意点</span></span><br><span class="line">当使用默认循环方法以外的负载均衡方法时，需要在keepalive指令之前启用它们。</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">keepalive_requests：设置一个keepalive连接可以处理的最大请求数。在发出最大请求数后，连接将关闭。</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">keepalive_requests number;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span></span><br><span class="line">keepalive_requests 1000; #在1.19.10版本之前，默认值为 100</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：upstream</span></span><br><span class="line">This directive appeared in version 1.15.3.</span><br><span class="line"></span><br><span class="line">Closing connections periodically is necessary to free per-connection memory allocations. </span><br><span class="line">Therefore, using too high maximum number of requests could result in excessive memory usage and not recommended.</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">keepalive_time：限制通过一个保活连接处理请求的最长时间。到了这个时间后，在后续的请求处理之后关闭连接</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">keepalive_time time;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span></span><br><span class="line">keepalive_time 1h;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文upstream</span></span><br><span class="line">This directive appeared in version 1.19.10.</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">keepalive_timeout：空闲连接的最长保持时间</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">keepalive_timeout timeout;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span></span><br><span class="line">keepalive_timeout 60s;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：upstream</span></span><br><span class="line">This directive appeared in version 1.15.3.</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">queue：如果在处理请求时无法立即选择上游服务器，则该请求将被放入队列中</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">queue number [timeout=time];</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值：无</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：upstream</span></span><br><span class="line">This directive appeared in version 1.5.12.</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">说明</span></span><br><span class="line">number指定在队列可以同时存在的最大请求数</span><br><span class="line">如果队列已满，或者在 timeout 参数指定的时间段内无法选择传递请求的服务器，则会向客户端返回 502 (Bad Gateway) 错误。</span><br></pre></td></tr></table></figure>
+
+<h3 id="简单反向代理示例"><a href="#简单反向代理示例" class="headerlink" title="简单反向代理示例"></a>简单反向代理示例</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上游服务器，本次用阿里云服务器</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">配置Nginx server</span></span><br><span class="line">server &#123;</span><br><span class="line">        listen 8080;</span><br><span class="line"></span><br><span class="line">        location /proxy/ &#123;</span><br><span class="line">                root /var/www/html;</span><br><span class="line">                index proxy.html;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line">nginx -t #测试配置文件是否正确</span><br><span class="line">nginx -s reload #重新加载配置寄文件</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">由于想测试动态服务器，所以下面做一个简单脚本，实现简易动态服务</span></span><br><span class="line">cd /var/www/html</span><br><span class="line">mkdir proxy</span><br><span class="line">cd proxy</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">编写生成proxy.html动态文本内容脚本random.sh</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/bash</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash"></span></span><br><span class="line"><span class="language-bash"></span></span><br><span class="line">DIR=/var/www/html/proxy</span><br><span class="line">FILE=proxy.html</span><br><span class="line"></span><br><span class="line">while true;do</span><br><span class="line">        echo &quot;Application Server,This time create number: $RANDOM&quot; &gt; $DIR/$FILE</span><br><span class="line">        sleep 1 #睡1秒，防止内容刷新太频繁</span><br><span class="line">done;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">执行脚本，并在后台挂起，注意脚本需要可执行权限</span></span><br><span class="line">nohup /var/www/html/proxy/random.sh &amp;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">查看proxy.html是否动态生成</span></span><br><span class="line">cat proxy.html</span><br><span class="line">Application Server,This time create number: 25253</span><br><span class="line">cat proxy.html</span><br><span class="line">Application Server,This time create number: 30014</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上面可以看到两次number不同</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">访问测试</span></span><br><span class="line">curl 127.0.0.1:8080/proxy/</span><br><span class="line">Application Server,This time create number: 950</span><br><span class="line">curl 127.0.0.1:8080/proxy/</span><br><span class="line">Application Server,This time create number: 23418</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">本地测试ok</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">接下来配置反向代理服务器，本机Mac</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">Nginx配置</span></span><br><span class="line">upstream back_end &#123;</span><br><span class="line">        server ip|domain隐藏:8080 weight=2 max_conns=100 fail_timeout=10s max_fails=3; #IP|DOMAIN隐藏，请写上游服务器IP或域名</span><br><span class="line"></span><br><span class="line">        keepalive 32;</span><br><span class="line">        keepalive_requests 80;</span><br><span class="line">        keepalive_timeout 20s;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">server &#123;</span><br><span class="line">        listen 89;</span><br><span class="line"></span><br><span class="line">        location /proxy &#123;</span><br><span class="line">                proxy_pass http://back_end/proxy;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">nginx -t #测试配置文件是否正确</span><br><span class="line">nginx -s reload #重新加载配置文件</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">访问测试</span></span><br><span class="line">curl 127.0.0.1:89/proxy/</span><br><span class="line">Application Server,This time create number: 25323</span><br><span class="line">curl 127.0.0.1:89/proxy/</span><br><span class="line">Application Server,This time create number: 12020</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">测试OK，简易反向代理动态服务完成</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="Nginx代理场景下接受用户请求包体的处理方式"><a href="#Nginx代理场景下接受用户请求包体的处理方式" class="headerlink" title="Nginx代理场景下接受用户请求包体的处理方式"></a>Nginx代理场景下接受用户请求包体的处理方式</h3><h4 id="接收包体的两种方式"><a href="#接收包体的两种方式" class="headerlink" title="接收包体的两种方式"></a>接收包体的两种方式</h4><ul>
+<li>接收完全部包体再发送</li>
+<li>一边接收包体一边发送</li>
+</ul>
+<h4 id="通过proxy-request-buffering指令决定处理方式"><a href="#通过proxy-request-buffering指令决定处理方式" class="headerlink" title="通过proxy_request_buffering指令决定处理方式"></a>通过proxy_request_buffering指令决定处理方式</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">proxy_request_buffering on | off;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span>	</span><br><span class="line">proxy_request_buffering on;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line">This directive appeared in version 1.7.11.</span><br></pre></td></tr></table></figure>
+
+<h5 id="proxy-request-buffering-on"><a href="#proxy-request-buffering-on" class="headerlink" title="proxy_request_buffering on"></a>proxy_request_buffering on</h5><ul>
+<li><p>说明：启用缓冲后，会先从客户端读取整个请求正文，然后再将请求发送到代理服务器</p>
+</li>
+<li><p>适应场景</p>
+<ul>
+<li>吞吐量高</li>
+<li>上游服务并发处理能力低</li>
+</ul>
+</li>
+</ul>
+<h5 id="proxy-request-buffering-off"><a href="#proxy-request-buffering-off" class="headerlink" title="proxy_request_buffering off"></a>proxy_request_buffering off</h5><ul>
+<li>禁用缓冲时，请求正文会在收到后立即发送到代理服务器。在这种情况下，如果 nginx 已经开始发送请求正文，则无法将请求传递给下一个服务器。</li>
+<li>适应场景<ul>
+<li>更及时响应</li>
+<li>减少Nginx磁盘IO</li>
+</ul>
+</li>
+</ul>
+<h4 id="相关指令"><a href="#相关指令" class="headerlink" title="相关指令"></a>相关指令</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">client_max_body_size size;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span></span><br><span class="line">client_max_body_size 1m;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line"></span><br><span class="line">设置客户端请求正文的最大允许大小。</span><br><span class="line">如果请求中的大小超过配置的值，则会向客户端返回 413（请求实体太大）错误。请注意，浏览器无法正确显示此错误。</span><br><span class="line"></span><br><span class="line">将size设置为 0 将禁用对客户端请求正文大小的检查。</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">client_body_buffer_size size;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span>	</span><br><span class="line">client_body_buffer_size 8k|16k;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line"></span><br><span class="line">设置读取客户端请求正文的缓冲区大小</span><br><span class="line">如果请求正文大于缓冲区，则将整个正文或仅其部分写入临时文件（临时文件目录由client_body_temp_path指定）</span><br><span class="line"></span><br><span class="line">默认情况下，缓冲区大小等于两个内存页。这是x86、其他32位平台和x86-64上的8K。在其他 64 位平台上通常为16K。</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">client_body_temp_path path [level1 [level2 [level3]]];</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span></span><br><span class="line">client_body_temp_path client_body_temp;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line"></span><br><span class="line">定义一个目录，用于存储保存客户端请求正文的临时文件。指定目录下最多可使用三级子目录层次结构。</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">示例</span></span><br><span class="line">client_body_temp_path /spool/nginx/client_temp 1 2;</span><br><span class="line">临时文件的路径可能像这样：/spool/nginx/client_temp/7/45/00000123457</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">client_body_in_single_buffer on | off;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span>	</span><br><span class="line">client_body_in_single_buffer off;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line"></span><br><span class="line">确定 nginx 是否应将整个客户端请求正文保存在单个缓冲区中（连续内存）</span><br><span class="line">使用 $request_body 变量时建议使用该指令，以节省涉及的复制操作的数量</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">client_body_in_file_only on | clean | off;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span></span><br><span class="line">client_body_in_file_only off;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line"></span><br><span class="line">确定nginx是否应将整个客户端请求正文保存到文件中。</span><br><span class="line">该指令可以在调试期间使用，或者在使用$request_body_file变量或模块ngx_http_perl_module的$r-&gt;request_body_file方法时使用。</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">client_body_timeout time;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span>	</span><br><span class="line">client_body_timeout 60s;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line"></span><br><span class="line">定义读取客户端请求正文的超时时间</span><br><span class="line">超时仅设置为两个连续读取操作之间的一段时间，而不是整个请求正文的传输</span><br><span class="line">如果客户端在此时间内没有传输任何内容，则请求将终止并出现 408（请求超时）错误</span><br></pre></td></tr></table></figure>
+
+<h5 id="简单示例"><a href="#简单示例" class="headerlink" title="简单示例"></a>简单示例</h5><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">反向代理服务器配置</span></span><br><span class="line">server &#123;</span><br><span class="line">        listen 90;</span><br><span class="line"></span><br><span class="line">        location /proxy &#123;</span><br><span class="line">                proxy_pass http://ip隐藏:8001;</span><br><span class="line"></span><br><span class="line">                client_max_body_size 10k;</span><br><span class="line">                #client_body_in_file_only on;</span><br><span class="line">                #client_body_temp_path temp_body_path;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上游服务器配置</span></span><br><span class="line">server &#123;</span><br><span class="line">        listen 8001;</span><br><span class="line"></span><br><span class="line">        location /proxy &#123;</span><br><span class="line">                return 200 &quot;Proxy OK&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">curl -F &quot;file=@test.sh&quot; 127.0.0.1:90/proxy #上传文件到指定服务器</span><br></pre></td></tr></table></figure>
+
+<h3 id="Nginx代理场景下如何更改发往上游的请求"><a href="#Nginx代理场景下如何更改发往上游的请求" class="headerlink" title="Nginx代理场景下如何更改发往上游的请求"></a>Nginx代理场景下如何更改发往上游的请求</h3><h4 id="请求行修改指令"><a href="#请求行修改指令" class="headerlink" title="请求行修改指令"></a>请求行修改指令</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">proxy_method method;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值：无</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line"></span><br><span class="line">指定在转发到代理服务器的请求中使用的HTTP方法，替换来自客户端请求的方法</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">proxy_http_version 1.0 | 1.1;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span>	</span><br><span class="line">proxy_http_version 1.0;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line">This directive appeared in version 1.1.4.</span><br><span class="line"></span><br><span class="line">设置代理的HTTP协议版本</span><br><span class="line">默认值为1.0，建议将1.1版本与keepalive连接和NTLM authentication一起使用</span><br></pre></td></tr></table></figure>
+
+<h4 id="请求头部修改指令"><a href="#请求头部修改指令" class="headerlink" title="请求头部修改指令"></a>请求头部修改指令</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">proxy_set_header field value;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span></span><br><span class="line">proxy_set_header Host $proxy_host;</span><br><span class="line">proxy_set_header Connection close;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line"></span><br><span class="line">允许重新定义或附加字段到传递给代理服务器的请求头</span><br><span class="line">value值可以包含文本、变量及其组合</span><br><span class="line"></span><br><span class="line">当且仅当当前级别上没有定义proxy_set_header指令时，这些指令才从先前的配置级别继承</span><br><span class="line"></span><br><span class="line">如果启用缓存，那么“If-Modified-Since”、“If-Unmodified-Since”、“If-None-Match”、“If-Match”、“Range”、“If-Range”这些头部字段不会从原始请求传递给代理服务器</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">示例</span></span><br><span class="line">可以像这样传递未更改的Host请求头字段</span><br><span class="line">proxy_set_header	Host	$http_host;</span><br><span class="line">但是，如果客户端请求头中不存在此字段，则不会传递任何内容。</span><br><span class="line">在这种情况下，最好使用$host变量：如果请求头中该字段存在，它的值等于Host字段的值，如果该字段不存在，等于主服务器的server_name值</span><br><span class="line">proxy_set_header Host $host;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">示例</span></span><br><span class="line">服务器名称可以和代理服务器的端口一起传递</span><br><span class="line">proxy_set_header	Host	$host:$proxy_port;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">示例</span></span><br><span class="line">如果字段的值为空，那么该字段不会传递给代理服务器</span><br><span class="line">proxy_set_header Accept-Encoding &quot;&quot;;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">proxy_pass_request_headers on | off;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span>	</span><br><span class="line">proxy_pass_request_headers on;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line"></span><br><span class="line">表示是否将原始请求头中的字段传递给代理服务器；使用了pass_set_header指令，即使该参数设置为off，请求头字段也会传递给代理服务器</span><br></pre></td></tr></table></figure>
+
+<h4 id="请求包体修改指令"><a href="#请求包体修改指令" class="headerlink" title="请求包体修改指令"></a>请求包体修改指令</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">proxy_set_body value;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值：无</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line">允许重新定义传递给代理服务器的请求正文。该值可以包含文本、变量及其组合</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">proxy_pass_request_body on | off;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span>	</span><br><span class="line">proxy_pass_request_body on;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line">表示是否将原始请求正文传递给代理服务器；使用了proxy_set_body指令，即使该参数设置为off，请求头字段也会传递给代理服务器</span><br></pre></td></tr></table></figure>
+
+<h4 id="简单示例-1"><a href="#简单示例-1" class="headerlink" title="简单示例"></a>简单示例</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上游服务器</span></span><br><span class="line">server &#123;</span><br><span class="line">        listen 8001;</span><br><span class="line"></span><br><span class="line">        location /proxy &#123;</span><br><span class="line">                return 200 &quot;请求行</span><br><span class="line">request_method: $request_method</span><br><span class="line">uri: $uri</span><br><span class="line">scheme: $scheme</span><br><span class="line">request: $request</span><br><span class="line">请求头</span><br><span class="line">http_test: $http_test</span><br><span class="line">content_length: $content_length</span><br><span class="line">content_type $content_type&quot;;</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">反向代理服务器配置</span></span><br><span class="line">server &#123;</span><br><span class="line">        listen 91;</span><br><span class="line"></span><br><span class="line">        location /proxy &#123;</span><br><span class="line">                proxy_pass http://IP隐藏:8001;</span><br><span class="line"></span><br><span class="line">                #proxy_method GET;</span><br><span class="line">                #proxy_http_version 1.1;</span><br><span class="line">                #proxy_set_header test &#x27;test config header set&#x27;;</span><br><span class="line">                #proxy_pass_request_headers off; #不能和proxy_set_header同时出现，否则无效</span><br><span class="line">                #proxy_set_body &quot;OOOOOOOOOOOOOOOOOOOO&quot;;</span><br><span class="line">                #proxy_pass_request_body off; #不能和proxy_set_body同时出现，否则无效</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">curl 127.0.0.1:91/proxy -H &quot;test: &#x27;test header&#x27;&quot; -d &quot;name=123&quot; #-H 设置request header -d 设置HTTP POST data</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">结果</span></span><br><span class="line">请求行</span><br><span class="line">request_method: POST</span><br><span class="line">uri: /proxy</span><br><span class="line">scheme: http</span><br><span class="line">request: POST /proxy HTTP/1.0</span><br><span class="line">请求头</span><br><span class="line">http_test: test config header set</span><br><span class="line">host: 106.14.248.117:8001</span><br><span class="line">content_length: 8</span><br><span class="line">content_type application/x-www-form-urlencoded</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上游服务器使用tcpdump抓包，查看body信息</span></span><br><span class="line">tcpdump -i eth0 port 8001 -A</span><br></pre></td></tr></table></figure>
+
+<h3 id="Nginx与上游服务器建立连接细节"><a href="#Nginx与上游服务器建立连接细节" class="headerlink" title="Nginx与上游服务器建立连接细节"></a>Nginx与上游服务器建立连接细节</h3><img src="/load_images/nginx_reverse_proxy7.png" alt="img" style="zoom:33%;" />
+
+<h4 id="长连接"><a href="#长连接" class="headerlink" title="长连接"></a>长连接</h4><ul>
+<li>客户端到Nginx</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">keepalive_timeout 65;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Nginx到上游服务</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">keepalive 32;</span><br><span class="line">keepalive_requests 100;</span><br><span class="line">keepalive_timeout 60s;</span><br></pre></td></tr></table></figure>
+
+<h4 id="指令-1"><a href="#指令-1" class="headerlink" title="指令"></a>指令</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">proxy_connect_timeout time;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span>	</span><br><span class="line">proxy_connect_timeout 60s;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line"></span><br><span class="line">定义与代理服务器建立连接的超时时间；注意time不能超过75s</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">proxy_socket_keepalive on | off;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span></span><br><span class="line">proxy_socket_keepalive off;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line">This directive appeared in version 1.15.6.</span><br><span class="line"></span><br><span class="line">为到代理服务器的传出连接配置“TCP keepalive”行为；即应用层复用TCP层的长连接</span><br><span class="line">默认情况下，操作系统的设置对套接字有效；</span><br><span class="line">如果该指令设置为值“on”，则为套接字打开SO_KEEPALIVE套接字选项</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">proxy_send_timeout time;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span>	</span><br><span class="line">proxy_send_timeout 60s;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line"></span><br><span class="line">设置将请求传输到代理服务器的超时时间</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">语法</span></span><br><span class="line">proxy_ignore_client_abort on | off;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">默认值</span></span><br><span class="line">proxy_ignore_client_abort off;</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">上下文：http, server, location</span></span><br><span class="line"></span><br><span class="line">确定当客户端关闭连接而不等待响应时是否应关闭与代理服务器的连接I </span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Nonfishz
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://codeman.club/nginx/reverse_proxy/" title="Nginx-反向代理">https://codeman.club/nginx/reverse_proxy/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Nginx/" rel="tag"># Nginx</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/nginx/nginx/" rel="prev" title="Nginx（持续更新）">
+      <i class="fa fa-chevron-left"></i> Nginx（持续更新）
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">反向代理</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89"><span class="nav-number">1.1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BC%98%E5%8A%BF"><span class="nav-number">1.2.</span> <span class="nav-text">优势</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A8%E9%9D%99%E5%88%86%E7%A6%BB"><span class="nav-number">2.</span> <span class="nav-text">动静分离</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89-1"><span class="nav-number">2.1.</span> <span class="nav-text">定义</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Web%E8%B5%84%E6%BA%90%E5%88%86%E7%B1%BB"><span class="nav-number">2.2.</span> <span class="nav-text">Web资源分类</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Web%E8%AF%B7%E6%B1%82%E5%9B%BE%E8%A7%A3"><span class="nav-number">2.3.</span> <span class="nav-text">Web请求图解</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%94%AF%E6%8C%81%E7%9A%84%E5%8D%8F%E8%AE%AE"><span class="nav-number">3.</span> <span class="nav-text">支持的协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#upstream%E6%A8%A1%E5%9D%97"><span class="nav-number">4.</span> <span class="nav-text">upstream模块</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%A8%E6%9D%A5%E5%AE%9A%E4%B9%89%E4%B8%8A%E6%B8%B8%E6%9C%8D%E5%8A%A1%E7%9A%84%E7%9B%B8%E5%85%B3%E4%BF%A1%E6%81%AF"><span class="nav-number">4.1.</span> <span class="nav-text">用来定义上游服务的相关信息</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8C%87%E4%BB%A4"><span class="nav-number">4.2.</span> <span class="nav-text">指令</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86%E7%A4%BA%E4%BE%8B"><span class="nav-number">5.</span> <span class="nav-text">简单反向代理示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Nginx%E4%BB%A3%E7%90%86%E5%9C%BA%E6%99%AF%E4%B8%8B%E6%8E%A5%E5%8F%97%E7%94%A8%E6%88%B7%E8%AF%B7%E6%B1%82%E5%8C%85%E4%BD%93%E7%9A%84%E5%A4%84%E7%90%86%E6%96%B9%E5%BC%8F"><span class="nav-number">6.</span> <span class="nav-text">Nginx代理场景下接受用户请求包体的处理方式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8E%A5%E6%94%B6%E5%8C%85%E4%BD%93%E7%9A%84%E4%B8%A4%E7%A7%8D%E6%96%B9%E5%BC%8F"><span class="nav-number">6.1.</span> <span class="nav-text">接收包体的两种方式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%80%9A%E8%BF%87proxy-request-buffering%E6%8C%87%E4%BB%A4%E5%86%B3%E5%AE%9A%E5%A4%84%E7%90%86%E6%96%B9%E5%BC%8F"><span class="nav-number">6.2.</span> <span class="nav-text">通过proxy_request_buffering指令决定处理方式</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#proxy-request-buffering-on"><span class="nav-number">6.2.1.</span> <span class="nav-text">proxy_request_buffering on</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#proxy-request-buffering-off"><span class="nav-number">6.2.2.</span> <span class="nav-text">proxy_request_buffering off</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E6%8C%87%E4%BB%A4"><span class="nav-number">6.3.</span> <span class="nav-text">相关指令</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E7%A4%BA%E4%BE%8B"><span class="nav-number">6.3.1.</span> <span class="nav-text">简单示例</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Nginx%E4%BB%A3%E7%90%86%E5%9C%BA%E6%99%AF%E4%B8%8B%E5%A6%82%E4%BD%95%E6%9B%B4%E6%94%B9%E5%8F%91%E5%BE%80%E4%B8%8A%E6%B8%B8%E7%9A%84%E8%AF%B7%E6%B1%82"><span class="nav-number">7.</span> <span class="nav-text">Nginx代理场景下如何更改发往上游的请求</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E8%A1%8C%E4%BF%AE%E6%94%B9%E6%8C%87%E4%BB%A4"><span class="nav-number">7.1.</span> <span class="nav-text">请求行修改指令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E5%A4%B4%E9%83%A8%E4%BF%AE%E6%94%B9%E6%8C%87%E4%BB%A4"><span class="nav-number">7.2.</span> <span class="nav-text">请求头部修改指令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E5%8C%85%E4%BD%93%E4%BF%AE%E6%94%B9%E6%8C%87%E4%BB%A4"><span class="nav-number">7.3.</span> <span class="nav-text">请求包体修改指令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E7%A4%BA%E4%BE%8B-1"><span class="nav-number">7.4.</span> <span class="nav-text">简单示例</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Nginx%E4%B8%8E%E4%B8%8A%E6%B8%B8%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5%E7%BB%86%E8%8A%82"><span class="nav-number">8.</span> <span class="nav-text">Nginx与上游服务器建立连接细节</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%95%BF%E8%BF%9E%E6%8E%A5"><span class="nav-number">8.1.</span> <span class="nav-text">长连接</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8C%87%E4%BB%A4-1"><span class="nav-number">8.2.</span> <span class="nav-text">指令</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Nonfishz"
+      src="/images/avatar.jpeg">
+  <p class="site-author-name" itemprop="name">Nonfishz</p>
+  <div class="site-description" itemprop="description">It's time.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">14</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/nonfishz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;nonfishz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:nonfishz@163.com" title="E-Mail → mailto:nonfishz@163.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Nonfishz</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">55k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">50 分钟</span>
+</div>
+<!--
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+-->
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  <script defer src="/lib/three/three.min.js"></script>
+    <script defer src="/lib/three/three-waves.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
