@@ -8,6 +8,77 @@
 ]]></content>
   </entry>
   <entry>
+    <title>云原生-如何在本机搭建小巧完备的kubernetes环境</title>
+    <url>/k8s/first/</url>
+    <content><![CDATA[<h2 id="Kubernetes"><a href="#Kubernetes" class="headerlink" title="Kubernetes"></a>Kubernetes</h2><span id="more"></span>
+
+<p><a href="https://kubernetes.io/zh/docs/tasks/tools/">tools</a></p>
+<h3 id="kind"><a href="#kind" class="headerlink" title="kind"></a>kind</h3><ul>
+<li>基于Docker，意思是”Kubernetes in Docker“。它功能少，用法简单，因此运行速度快，容易上手。</li>
+<li>缺少很多Kubernetes标准功能，例如仪表盘、网络插件，也很难定制化。</li>
+<li>适合做快速开发测试，不太适合学习研究。</li>
+</ul>
+<h3 id="minikube"><a href="#minikube" class="headerlink" title="minikube"></a>minikube</h3><ul>
+<li>”迷你“版本的Kubernetes，紧跟Kubernetes版本更新，同时也兼容较旧的版本（最多只到之前的6个小版本）。</li>
+<li>小而美，可执行文件仅有不到100M，运行镜像也不过1GB，这么小的空间却集成了Kubernets的绝大多数功能。</li>
+<li>不仅有核心的容器编排功能，还有丰富的插件，例如Dashboard、GPU、Ingress、Istio、Kong、Registry等。</li>
+</ul>
+<h4 id="如何搭建minikube环境"><a href="#如何搭建minikube环境" class="headerlink" title="如何搭建minikube环境"></a>如何搭建minikube环境</h4><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Intel x86_64</span> </span><br><span class="line">curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Apple arm64</span></span><br><span class="line">curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-arm64</span><br><span class="line"></span><br><span class="line">sudo install minikube /usr/local/bin/</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">查看版本号，验证是否安装成功</span></span><br><span class="line">minikube version</span><br></pre></td></tr></table></figure>
+
+<h4 id="kubectl"><a href="#kubectl" class="headerlink" title="kubectl"></a>kubectl</h4><p>minikube只能搭建Kubernete环境，要操作Kubernets，还需要专门的客户端工具kubectl</p>
+<p>类似于docker，kubectl也是一个命令行工具，作用也类似，与Kubernets后台服务通信，把命令转发给Kubernets，实现容器和集群的管理功能</p>
+<p>kubectl是一个与Kubernets、minikube彼此独立的项目，所以不包含在minikube里，但minikube提供了安装它的简化方式：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube kubectl</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">该命令会把与当前Kubernets版本匹配的kubectl下载下来，存放在内部目录（例如.minikube/cache/linux/arm64/v1.23.3）</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>所以，在minikube环境里，会用到两个客户端：minikube管理Kubernets集群环境，kubectl操作实际的kubernetes功能，和Docker比起来有点复杂。</p>
+<img src="/load_images/k8s_1_1.png" alt="image-20221105013324401" style="zoom:50%;" />
+
+
+
+<h4 id="验证minikube环境"><a href="#验证minikube环境" class="headerlink" title="验证minikube环境"></a>验证minikube环境</h4><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube start --kubernetes-version=v1.23.3</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">minikube start会从Docker Hub上拉取镜像，以当前最新版本的Kubernetes启动集群。</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">--kubernetes-version，明确指定要使用的Kubernetes版本</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">注意：</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">如果以上命令执行后，镜像拉取失败，那么先执行minikube delete</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">然后执行minikube start --kubernetes-version=v1.23.3 --image-mirror-country=<span class="string">&#x27;cn&#x27;</span> --force</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">不能用root账号，使用普通用户加上--force</span></span><br></pre></td></tr></table></figure>
+
+<p>现在Kubernets集群就在本地运行了，可以使用以下命令查看集群的状态：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube status</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">结果</span></span><br><span class="line">minikube</span><br><span class="line">type: Control Plane</span><br><span class="line">host: Running</span><br><span class="line">kubelet: Running</span><br><span class="line">apiserver: Running</span><br><span class="line">kubeconfig: Configured</span><br><span class="line"></span><br><span class="line">minikube node list</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">结果</span></span><br><span class="line">minikube	192.168.49.2</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，Kubernetes集群里现在只有一个节点，名字就叫：minikube，类型是Control Plane，里面有三个服务：host、kubelet、apiserver；IP地址是192.168.49.2。</p>
+<p>可以使用命令minikube ssh登录到这个节点：</p>
+<p><img src="/load_images/k8s_1_2.png" alt="image-20221107102226838"></p>
+<h4 id="kubectl命令"><a href="#kubectl命令" class="headerlink" title="kubectl命令"></a>kubectl命令</h4><p>使用minikube自带的kubectl有一点形式上的限制，要在前面加上minikube前缀，后面再有个–，例如：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl version #这条命令还不能直接用，要用下面这种写法</span><br><span class="line">minikube kubectl -- version</span><br></pre></td></tr></table></figure>
+
+<p>为了避免这个麻烦，使用alias别名功能，写到当前用户目录下的.bashrc：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">alias kubectl=&quot;minikube kubectl --&quot;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">source .bashrc</span><br></pre></td></tr></table></figure>
+
+<p>使用kubectl命令补全功能</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">source &lt;(kubectl completion bash)</span><br></pre></td></tr></table></figure>
+
+<p>现在就可以使用kubectl了：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl version --short</span><br><span class="line"></span><br><span class="line">Client Version: v1.23.3</span><br><span class="line">Server Version: v1.23.3</span><br></pre></td></tr></table></figure>
+
+<h4 id="运行一个Nginx应用"><a href="#运行一个Nginx应用" class="headerlink" title="运行一个Nginx应用"></a>运行一个Nginx应用</h4><p>命令与docker一样，也是run，不过形式有一点区别，需要用–image指定镜像，然后Kubernetes会自动拉取并运行：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl run ngx --image=nginx:alpine</span><br></pre></td></tr></table></figure>
+
+
+
+<p>Kubernetes中的Pod概念，可以理解为”穿了马甲“的容器，查看Pod列表：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get pod</span><br><span class="line"></span><br><span class="line">NAME   READY   STATUS    RESTARTS   AGE</span><br><span class="line">ngx    1/1     Running   0          2d9h</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，在Kubernetes集群里有一个ngx的Pod在运行，到此我们这个单节点的minikube环境已经搭建成功了。</p>
+]]></content>
+      <categories>
+        <category>Kubernetes</category>
+      </categories>
+      <tags>
+        <tag>Kubernetes</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Nginx-HTTPS</title>
     <url>/nginx/https/</url>
     <content><![CDATA[<h2 id="Nginx-HTTPS"><a href="#Nginx-HTTPS" class="headerlink" title="Nginx-HTTPS"></a>Nginx-HTTPS</h2><span id="more"></span>
@@ -291,6 +362,28 @@
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">curl 127.0.0.1/123.txt -I</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">缓存未命中</span></span><br><span class="line">curl 127.0.0.1/123.txt -I</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">缓存命中</span></span><br><span class="line"></span><br><span class="line">curl 127.0.0.1/cache_purge/123.txt -I</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">清除缓存</span></span><br><span class="line"></span><br><span class="line">curl 127.0.0.1/123.txt -I</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">缓存未命中</span></span><br></pre></td></tr></table></figure>
 
 ]]></content>
+      <categories>
+        <category>Nginx</category>
+      </categories>
+      <tags>
+        <tag>Nginx</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Nginx中的http_proxy_module</title>
+    <url>/nginx/http_proxy_modyle/</url>
+    <content><![CDATA[<div class="hbe hbe-container" id="hexo-blog-encrypt" data-wpm="Oh, this is an invalid password. Check and try again, please." data-whm="OOPS, these decrypted content may changed, but you can still have a look.">
+  <script id="hbeData" type="hbeData" data-hmacdigest="7f0db84661f840ccba1562f3329a2f3ab4e8024a05b7b42edf3f426759d9931e">cc4eaccd88a7cf11990f2cd15dba71878958af4fad6254f56ab6d6066d662dbb5a69a5e4654f019acb68ccef866b77da74a3e1b09e1e99aa50a6eb99d588618ba5328c0628290beb973610c4bb16200d10726c86566942e3cf7541efc65e3b3373729c243de09864138b94b29efdd69e74c23cb5d3cd3b8e34b7befd7bf110050baaf38ca3198d1d3d84446199163ac88cf27a2090c05605ece53fdcbd4a686b00dc59f1a45590b4f507b339cfab3407c7633c3d2abcfdd14fc8bef78b380bb9e222c577281ed983be88d5ea6b02401a0fb21cf300d38be7d450f5066f37243b9b2bc2a855f6e269dcbf20d66728d527f054d965353db51fb7fc63eb0eda25aa05fe9ccdbc444ec7f2dc6202417ede5935f506be7ac1e9963bc9746e8bc3f7b5d0aa0b5798f812610bef2d41cf99a3edc4685173c00bc736557c3fffcdbbc01ea8fd1ce08e9e915f8a2a27661114fe3664018dbc1ce3e27e193c573ce075b9c5f4a769c78b5e188bb87ca0eac31735b0b7b5c629e29a04ce147d0a74a5bb088b9e0c1b521c7f9a29a98dbb707dc0ece456e8451857634d00fc93e2754ee8cb1c6799267178c81482afa559c11d99dab53cb6be817fcfb59681ca72ea76175051d92119ebb6468f8486d636a50830a73d11c28d9296bc05c96ab344a342e5ee1025e3e950cc9751abbaf2af6fb20f3c53d06cc704053da6ff83e827160f3f241e2914cc535b6ce673884cbbe19d0b00518f119f4c748878f10707553ff9e59feb718827881cfd30832e86db82a8e3d509a1736de79e33b67e21f3a24ddb87e02a698fbe861748aed1df252ddcd0cdf3ff62cdabfa73009ff144e91040de0c6f105a90ee5f02c65e5528909b98aba560d07735a608d8c6d668e745c82a37ac31cda91dd5320d1fd512d6671c8f1e0c6b76e07cd7201786cac3c79f87b50cd9b4cb0d583704a6e173f08719b7f70ffce2185be3966b95efb46bccc8b6af51b9bbf148384ac3b572e60ce4ead89463af610565bde3b710282a13b8551abe358a667162cb93b780624ddae2810a923e04c2dde3f59faf13530686a4dc0a2e07db5f6773b552c1d0282b1af0f9e987999d212d579432787d64db6db5aae16e17f5af0cb518f86b776bbfe39bed0111d21ed869cbf70903d92ea59eae11a0455ee91f15bcf2922d553d751fb74be7d9685d22b21cf0872c64ac18747e1b584c5f61cbe58fd7c82cb51373d8ff047d14631c3fb447c8481a0d64e73d85cfcf0e914802c36c87a2eb844c29e4f8cccb636d1901206fdeb9d228b96c146dd2fbe768aa166f04ca0af31414b2db68e23961e6c505c4f8679fc734c8c160fdedfb60b32e3239c53b934334c2e1059de2e81d396b5299aa08abb944aa6b7f92cd95426d3f4102decd9533bc508afc1c7775dbd1bf0b5f613d790b12b3a578ab112ab135686f05c486505bcaf7bfd450b7ac5d9bc2806c09c26d7cc13e30b4c932868cecc78040a2265c846b8ff16fa95a1e3f50d120ed246e85ba4a22f077ae8b133a58ba6add37e366c8f8c98700b99ef0517d3347125865820fb8216938c5d0ce4187cd26f8c2284f8f0d794abe466cbcec70816eeef704bce958293ec2ccc69617ea4ef535f3ad9c6af564dfac6c76c4c06a452d441cc2b9c22772e3b5058a7e5c08a9323fbf5c39ee4d1699bd50c617bb29d45ed4004e19a39874ba2abc447a7147745ac6bff828c7a784077a22e68ff8ad81a931186dbb0f5bab04f2628d92e8267df7fa8a8242ccc8c6e473eea48466a8d2ee568e850028521e6952d89cebee97233609c08abb4cc0b70cedd5892e9dc674434a5475733109e1c3a510784ba60c0ea2c33ca9cb91db78276cb9dc68c519fad927acd2af6bc7dafaed992d60a1585265ee0654bb669178d8292b43cf40a3603a2c99e9291914b51895492b72bd22f3f525caef2363012db61037618e230c234a09da042e03ae2d0965f8c578c07c170f72533feea4676c063129b9b267d1cfca816b31848ca9866905f2f3c20a6a9e9889d5d6ddba2c9a1ece39748afb7792a7457b4fc9aabcc60ed580e32adcb229357ac804bf13a385eff6bb8f4fd6880e46fb4ccbc4a66fdb6a5d0aa25cf010e477c6d23eda4062b9640629e1ecc5f966245ca5a4ad9428f791478a6a6622c8e766620582981e43cfc7df6816f68298ac17dacea34c0ab3f826ce3dd0210ae3539e0605099dca5a68eb2bd8009ffb225ad41eaddb6b9aef19bce3fb0f32f3e9daf203aa872cd29483d2f1b3d15ecf01424107f2e6e132caf122812da30c5cfac762af0390dbffe9daecf3d410b45a03d1cebc30920911a8b5f8958509b054dfd33b8a05c0c14e4829ccb968fe71b29de8fcc2a635ea4609bea4af66d856f7ace6d8e8a4372b370cbba8e813c992fffa4656c0002e23e05596b27bdcbc61163313f6173d7111a6e4fef22f8a0b2f8c8f7d3187d66add561bab497222da7173069f1e8a5bd084467b7e36e274e87ab7ded8e8c1268d8e3926e09438227eeff645c77cb1beafe811dc6f0625def6e7050d7f121aa7a7b7735c44c307131ac23750edb84a565f9a49643120147dd8a340a7cd9073146a413f3c3a3a733a200d5ded95d2bd89da101c48c98bbcf38f47f8f00f3fb19b24857f12ee9519daffd3126e2f862c788604eff14580afa32895a7366339b00916010ed1eac8c914dbe84d56598bda2d2a05d0ab4505abde5d0c4f61cd40fa7851e89a8ca2236b62bbe79f87c24c8ab1ddf6bd667cb14f4fe8e43e3feac87a1a76600563ada82f67b893a241332b9fa16ee7920eaf3d6f84384bf0e40b8c0c71a2e0fe203da3a22d82501d95dfee402a5e44e24267d7e776b3671251e8b5561d328fc1d34e9974aaa0749b25e0e3cb40f6c601fa344715d98012d51e1535f6f74aefac4463152398b09a50c765c4b45f26caf1da9fcc88721aa17e61a4a71a7190ce7bd92174adaae244f3acd556d41ea5671342ec336b27bb233acc763ce6cb1a40de564acbe481e896ea1319a2e7e51180ad12d5d6b609aeabd8efe39a9982ecaf8a699865cc85326d68f3a621d92a4d46cedf382912fb26320149ed12179e51794e384efffb2ed7549fa420eff7dcaa3708cb230ce9ec98d90488ce6de4bf6e7c764d3cc1bedccc7c136e82b40fb9332074e130f99caf947907759f2a42d37eb8aba845b2b97c565ff0de500e0e83fa5c5d2c39f275009275da273d06973490394637c065b302472ed81446400cde628eeaed92cbf1d758c5b341497fa10278ea69bde98ce6366ae3c9904ae2058d16d3804d7eef7cb6fe9d48700c248fc3aa1b38396c3d4738182c995c510328837620a369c3f518e3c04e5209bf498d78b63440b1ccc094aad215992987051f2f53b2e179a395109405a079c18addef0bd4d6563134d2fe1fbdd90f84f90c22b0cf08e104dda5b81a14df2ca972000ea10f39c9577695d463d1c2e2690792b515a2e740199160bdf071d75595b61461e587fa2f912178f0825d4039258cde16aa208da3577fb9cff86440fc102e9378687c26fcbc84734e3777c311e29772cd0663891c1f5452dc2e09902c4ddec3007c8d23be654ab154b42c305fce04e9dcde946019be544c18a7c3ff94001cd6b07f6196ebbcc4ac94ba4410f125cbfc1b9dee13ecbc5d822ffb629823593253d4bbd89acbc5c48096d364c285eb2a6d24378bd7773dff70fb616ac545009c9d238f8297eef7ef376f1a14525659efd2f99fbf8859f51b4337026e8e6dbd13af77b7660403e7451745b3abbbbe57dd3ba6bb2e5411cfcfb4e7cbd1826ed1248e4643cbb71b90019c769a6855fa9a2021b6098f6ae4bee6d57ce1c201f4a3323b8d5859dc95f57d4c755f6e38f1c3fba22f6822a0733c2460f742f647ccd7298f7bd22e98e4c4e9db56c05a5f609e5e341db885cc5f77dd3d5919b67ea6e7fd4af73c917b6a1d4ee6182f2f4f94610ef2aef1d429da981ee0f921300b750a1b66a1224de2620e979fa47da2b044e08c3a53deace8786cf58157780ea245106fe614b9db154738ee1ee4b188714bfe828994a5ae8ee5e40e0c06bfe1c144b945b48ead78439139ec1de3be187b75380cb27294ffd7e449f77e6c674dc6542c1a1bc15791f7a986157b4266687b166bbe1506756117c0cd232a0871268c214da33764ed64d7b2b2d84b66c75c0c874346401c491801a50adf018307e717d9327448507dc6f1cc790e25b1aa558c08df67f61f50ef9b472e22ae3964a4a63693c7e7e7a0e3a1e1092033168142ec5647d5a4d6fe4f74a6b0e2167a3d2f51b6a7c8557bc2d399787c75d5edeee366a153902ccf170634fc781b66d9c3d317a87269230918d461e6d7921539bec17d39177a05aa3cf9c25a7aac81cfc1c1f20d98ae9b5a5247aef50a4adfec47aabf5bddd39bd71038782247d98223f6cfa807590b706df6242c8771c067c7e26c1739604d934b90d93b7010b360bddaae71e43d9207c0ed9993e726d3f9296933038880b8d861fd125a947c8e4d45d7c904b37e2b4c174df483ed1f1f3ad2e900afbe603b210a31dde2bed0ea4ce0e8cba0057446a317383157a6f5e337c948d3280602cd1b2a2b4d0a9453127a9cffb84c0bbdeaab33ab0b004db37f6b4a47ae1ab77f2b3d550f80c4b23ba6afbcc8f7e7c3e5524f69544dd2bf004000cfc34566e57993b9452003746a229651f70fcedb420f67d90dd6ff117e95e5020a1ad6e6eeac413b1ba92aa109fa4356babcb962cc8b68056ba63d5005c68cda7451c3d660882a2c4852dacc49118b05fb3dadddb68831480b3139966caccdf9e17de198a3884f66ec1dad695dcceb607b42d038f0fb0a120565bd4e0ba3c84f6f471d1bab1169cc3f705a951dbe38d1d6dde7dfd51eb6e898716bc2d7f6021c5252107e63f13784c5f60c55992f4f1bdb67b8779f1cbd91dcc62d8e6121500e87fabaa09ddd5a7758204a5df0ea315c3af090c9693392b11853f86c6e99db66d99131d64cd4f924e71763aa654eb957876b741eb17afa0bdda90b0dc23c393b1df7617b065006c95dc473038a294b2ba8a4c7147039e1758667a919e4b4d8b062342c077103c8fb5008b270dd4e429e77ae3abe6cd8a4adf60aacd02058615991b53a058fc41cd0ec827535d738aeadd532e74d3197b4d364e56c1f2aa5c50e82d3624748549df16fce7630bc3d6b4b6d717bfcf6f746f409fda0727237826318235d7872edb85333c87ca61ea7fba288c6f51f11afda62f63e820e1781195aeffc1c4d95648e6c795a1dc7dd50f35dc2e4b6bc4a21c8f86bded7855a7b83751f1805d92f14f26ecac9260b40dd8f81679a3dee124d85ab2e7152b98f36f8d18cc4247a85312f5d4aef024bb71b2bc8b43ad4a42da9aa0f00292b1157777d01e02dad39aab6b4234a7fa4a2aa59fcbdea27d79f9f222ee359357d8a040586e700e7311721df464d42c0f3a24398ebec2b0b661d97ab3222c28327fb0dde989769ad9a2c527fc78e6a232624aaa4179139ba708fb07265a7ba28cc78b087f867cf5914e270389cd27b0c04bfe261931824f9b5797ae6f708d9dc249c9153ae7ce67872c32e27e6c17a508d3588253d6f70e8fce806756483b1c051e2bd23e3196d69dd88ce1a4aa5b791ef86acdac4bc90edcd26ff3986a8cd05c69041c64888839a0506a7d4012415fb1bb65aa250db87d3c14b3493fcc23d6e3770ff3cecafa773ab9434b40d1543e0a1fb8d09d2b7d77761b2171444bb37aae941c2cbda67f696c557a9bbc177c1e29e1a42659a2f9c1f19de94cef5b6f106f162a8cfcf1ccc9bd1bdc8fcc7beae88871b7581b53dd07af6877f01985f9b7e1d23b154859c552bed01496ccdaca2d6ffef457512832c19c07e0c641c51c1750c2de79dc0b9b596251013155d15735ec230cb3f1d5a79e14113d143480314ede75bc9721693fea4f5691bdf56855825cb6978889720aa2df50f9f092efe915c4cef5cb3e29664715263e5337b0850543f1756c640420fc63e0d887411cc7a8251de7fe0611fbea150764c9f151a05b5b2b18f5a77fa888c5b9829800ef6bd191a8de4f06fa343e9c5053d42f8de4b24236fdf94c6dc2910ae4a41048799841ee418bbe334b4ca8f92b9eee6cf5e2d24a244f1ca03a7756a09d72dadd78df87a6a1c29df2fcac8c7676e47b919707aac4e35e17b08814da0c816c8eff04ea875bccd1875bf17edd37538fec27e0597abdbc7b2da270a573091cc09d4ac9059e4944880247719425b815ad3b2912c46716e09e968a7e63f6b00c00b11b569530ce64b28a69359466f2307e93e9dd7d4c251a2e2ba9296ac030aaa98493c45eef2a72bec16e0b3107d19257cadc6a5b5234c2f9637ab27fdf77546bf272d5dc9c559dd37a440158c813838a8c857c8a492fe0efa78b19cf4a0fc1a79ee3537decb8e9d9a09ac7d9ddd96bda409bcd4d21a13ec59ee875ce9410348f531e2253e1656eba5d3a34140c9de6cf929ddb2a958e82a1d4d7c52ab300afa9cbd481248db088e2c36e0347dd63d0bfdf62e361d6a77803cc3ce730960c7260dd1cf4adb38e71a2b704b8d82cce1b8b1691cec9ed5de4aa88a74ea1316307f5edb333c80b059adcdf01b404aff12bf67d7caa7c411bb01544f83167e7841ae30fe3d8b2167d6a4270379d51343d0f2575d8e7020041a385fefc049d04dc4c77689c00d04f327302db5ff34f10c1f2d2879f4d1dac90ddbd95ad75f1d7b176269a6ff92e8f8f54419b6c0076161397bfb8c28c41ddd5260786101429384265766ef4608c33c3e34013ed9a7e8200d5d61eaf6cf2b3e779c0fc52a3466107699ac41315dab5f35b47402b57df65cd5d3b9464479f174c00525a230b6bb858ab257f70f19332b93692139dcc9a773d1542f9d15afba386df238b6801bed71226b38ffd64de14880dc9d8fe2facbe462d6b55024b75fffe5da779913a36d84a0a27039bc9f3da5e66e78502f07570e40a6c844cf298a51617168a3db2639bcec3b7ce656fd8b92295c4d7bd412104637c508bca99cbc</script>
+  <div class="hbe hbe-content">
+    <div class="hbe hbe-input hbe-input-default">
+      <input class="hbe hbe-input-field hbe-input-field-default" type="password" id="hbePass">
+      <label class="hbe hbe-input-label hbe-input-label-default" for="hbePass">
+        <span class="hbe hbe-input-label-content hbe-input-label-content-default">Hey, password is required here.</span>
+      </label>
+    </div>
+  </div>
+</div>
+<script data-pjax src="/lib/hbe.js"></script><link href="/css/hbe.style.css" rel="stylesheet" type="text/css">]]></content>
       <categories>
         <category>Nginx</category>
       </categories>
@@ -1413,26 +1506,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Mac使用技巧（持续更新）</title>
-    <url>/mac/use_tips/</url>
-    <content><![CDATA[<h4 id="一、vim中鼠标滚动"><a href="#一、vim中鼠标滚动" class="headerlink" title="一、vim中鼠标滚动"></a>一、vim中鼠标滚动</h4><span id="more"></span>
-
-<h5 id="1-Iterm2中设置（有弊端）"><a href="#1-Iterm2中设置（有弊端）" class="headerlink" title="1.Iterm2中设置（有弊端）"></a>1.Iterm2中设置（有弊端）</h5><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">iterm2-&gt;</span><span class="language-bash">Profiles-&gt;advanced</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">搜索mouse</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">设置up down 设置的值要符合vim的操作命令(vim编辑中j为光标向下移动，k为向上移动)</span></span><br><span class="line">Scorll whell down sends the specified text when in alternate screen mode. 设置为/j</span><br><span class="line">Scorll whell up sends the specified text when in alternate screen mode. 设置为/k</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">此设置有个弊端就是，vim在编辑模式，上下滚动鼠标会输入j/k</span></span><br></pre></td></tr></table></figure>
-
-<h5 id="2-x2F-vimrc文件中设置-建议"><a href="#2-x2F-vimrc文件中设置-建议" class="headerlink" title="2.~&#x2F;.vimrc文件中设置(建议)"></a>2.~&#x2F;.vimrc文件中设置(建议)</h5><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">vim ~/.vimrc</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">添加配置</span></span><br><span class="line">set mouse=a</span><br></pre></td></tr></table></figure>
-
-<h5 id="3-pecl安装swoole问题"><a href="#3-pecl安装swoole问题" class="headerlink" title="3.pecl安装swoole问题"></a>3.pecl安装swoole问题</h5><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">可以通过--with-openssl-dir指定openssl位置</span></span><br><span class="line">enable sockets supports? [no] : yes</span><br><span class="line">enable openssl support? [no] : yes --with-openssl-dir=/usr/local/Cellar/openssl@1.1/1.1.1q</span><br></pre></td></tr></table></figure>
-
-<h5 id="4-phpstorm安装swoole插件"><a href="#4-phpstorm安装swoole插件" class="headerlink" title="4.phpstorm安装swoole插件"></a>4.phpstorm安装swoole插件</h5><p><img src="/load_images/mac_use1.png" alt="img"></p>
-]]></content>
-      <categories>
-        <category>Mac</category>
-      </categories>
-      <tags>
-        <tag>Mac</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>PHP-编译安装扩展</title>
     <url>/php/php_extension/</url>
     <content><![CDATA[<h4 id="安装示例"><a href="#安装示例" class="headerlink" title="安装示例"></a>安装示例</h4><h5 id="一、执行phpize"><a href="#一、执行phpize" class="headerlink" title="一、执行phpize"></a>一、执行phpize</h5><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">进入php7.4的源码包中gd扩展的目录</span></span><br><span class="line">cd /usr/local/src/php-7.4.28/ext/gd</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">执行phpize</span></span><br><span class="line">/usr/local/php/php74/bin/phpize</span><br></pre></td></tr></table></figure>
@@ -1578,6 +1651,26 @@
       </tags>
   </entry>
   <entry>
+    <title>Mac使用技巧（持续更新）</title>
+    <url>/mac/use_tips/</url>
+    <content><![CDATA[<h4 id="一、vim中鼠标滚动"><a href="#一、vim中鼠标滚动" class="headerlink" title="一、vim中鼠标滚动"></a>一、vim中鼠标滚动</h4><span id="more"></span>
+
+<h5 id="1-Iterm2中设置（有弊端）"><a href="#1-Iterm2中设置（有弊端）" class="headerlink" title="1.Iterm2中设置（有弊端）"></a>1.Iterm2中设置（有弊端）</h5><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">iterm2-&gt;</span><span class="language-bash">Profiles-&gt;advanced</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">搜索mouse</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">设置up down 设置的值要符合vim的操作命令(vim编辑中j为光标向下移动，k为向上移动)</span></span><br><span class="line">Scorll whell down sends the specified text when in alternate screen mode. 设置为/j</span><br><span class="line">Scorll whell up sends the specified text when in alternate screen mode. 设置为/k</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">此设置有个弊端就是，vim在编辑模式，上下滚动鼠标会输入j/k</span></span><br></pre></td></tr></table></figure>
+
+<h5 id="2-x2F-vimrc文件中设置-建议"><a href="#2-x2F-vimrc文件中设置-建议" class="headerlink" title="2.~&#x2F;.vimrc文件中设置(建议)"></a>2.~&#x2F;.vimrc文件中设置(建议)</h5><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">vim ~/.vimrc</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">添加配置</span></span><br><span class="line">set mouse=a</span><br></pre></td></tr></table></figure>
+
+<h5 id="3-pecl安装swoole问题"><a href="#3-pecl安装swoole问题" class="headerlink" title="3.pecl安装swoole问题"></a>3.pecl安装swoole问题</h5><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">可以通过--with-openssl-dir指定openssl位置</span></span><br><span class="line">enable sockets supports? [no] : yes</span><br><span class="line">enable openssl support? [no] : yes --with-openssl-dir=/usr/local/Cellar/openssl@1.1/1.1.1q</span><br></pre></td></tr></table></figure>
+
+<h5 id="4-phpstorm安装swoole插件"><a href="#4-phpstorm安装swoole插件" class="headerlink" title="4.phpstorm安装swoole插件"></a>4.phpstorm安装swoole插件</h5><p><img src="/load_images/mac_use1.png" alt="img"></p>
+]]></content>
+      <categories>
+        <category>Mac</category>
+      </categories>
+      <tags>
+        <tag>Mac</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>nohup命令</title>
     <url>/command/nohup/</url>
     <content><![CDATA[<h3 id="nohup"><a href="#nohup" class="headerlink" title="nohup"></a>nohup</h3><p>no hang up</p>
@@ -1657,28 +1750,6 @@
       </categories>
       <tags>
         <tag>Composer</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Nginx中的http_proxy_module</title>
-    <url>/nginx/http_proxy_modyle/</url>
-    <content><![CDATA[<div class="hbe hbe-container" id="hexo-blog-encrypt" data-wpm="Oh, this is an invalid password. Check and try again, please." data-whm="OOPS, these decrypted content may changed, but you can still have a look.">
-  <script id="hbeData" type="hbeData" data-hmacdigest="7f0db84661f840ccba1562f3329a2f3ab4e8024a05b7b42edf3f426759d9931e">cc4eaccd88a7cf11990f2cd15dba71878958af4fad6254f56ab6d6066d662dbb5a69a5e4654f019acb68ccef866b77da74a3e1b09e1e99aa50a6eb99d588618ba5328c0628290beb973610c4bb16200d10726c86566942e3cf7541efc65e3b3373729c243de09864138b94b29efdd69e74c23cb5d3cd3b8e34b7befd7bf110050baaf38ca3198d1d3d84446199163ac88cf27a2090c05605ece53fdcbd4a686b00dc59f1a45590b4f507b339cfab3407c7633c3d2abcfdd14fc8bef78b380bb9e222c577281ed983be88d5ea6b02401a0fb21cf300d38be7d450f5066f37243b9b2bc2a855f6e269dcbf20d66728d527f054d965353db51fb7fc63eb0eda25aa05fe9ccdbc444ec7f2dc6202417ede5935f506be7ac1e9963bc9746e8bc3f7b5d0aa0b5798f812610bef2d41cf99a3edc4685173c00bc736557c3fffcdbbc01ea8fd1ce08e9e915f8a2a27661114fe3664018dbc1ce3e27e193c573ce075b9c5f4a769c78b5e188bb87ca0eac31735b0b7b5c629e29a04ce147d0a74a5bb088b9e0c1b521c7f9a29a98dbb707dc0ece456e8451857634d00fc93e2754ee8cb1c6799267178c81482afa559c11d99dab53cb6be817fcfb59681ca72ea76175051d92119ebb6468f8486d636a50830a73d11c28d9296bc05c96ab344a342e5ee1025e3e950cc9751abbaf2af6fb20f3c53d06cc704053da6ff83e827160f3f241e2914cc535b6ce673884cbbe19d0b00518f119f4c748878f10707553ff9e59feb718827881cfd30832e86db82a8e3d509a1736de79e33b67e21f3a24ddb87e02a698fbe861748aed1df252ddcd0cdf3ff62cdabfa73009ff144e91040de0c6f105a90ee5f02c65e5528909b98aba560d07735a608d8c6d668e745c82a37ac31cda91dd5320d1fd512d6671c8f1e0c6b76e07cd7201786cac3c79f87b50cd9b4cb0d583704a6e173f08719b7f70ffce2185be3966b95efb46bccc8b6af51b9bbf148384ac3b572e60ce4ead89463af610565bde3b710282a13b8551abe358a667162cb93b780624ddae2810a923e04c2dde3f59faf13530686a4dc0a2e07db5f6773b552c1d0282b1af0f9e987999d212d579432787d64db6db5aae16e17f5af0cb518f86b776bbfe39bed0111d21ed869cbf70903d92ea59eae11a0455ee91f15bcf2922d553d751fb74be7d9685d22b21cf0872c64ac18747e1b584c5f61cbe58fd7c82cb51373d8ff047d14631c3fb447c8481a0d64e73d85cfcf0e914802c36c87a2eb844c29e4f8cccb636d1901206fdeb9d228b96c146dd2fbe768aa166f04ca0af31414b2db68e23961e6c505c4f8679fc734c8c160fdedfb60b32e3239c53b934334c2e1059de2e81d396b5299aa08abb944aa6b7f92cd95426d3f4102decd9533bc508afc1c7775dbd1bf0b5f613d790b12b3a578ab112ab135686f05c486505bcaf7bfd450b7ac5d9bc2806c09c26d7cc13e30b4c932868cecc78040a2265c846b8ff16fa95a1e3f50d120ed246e85ba4a22f077ae8b133a58ba6add37e366c8f8c98700b99ef0517d3347125865820fb8216938c5d0ce4187cd26f8c2284f8f0d794abe466cbcec70816eeef704bce958293ec2ccc69617ea4ef535f3ad9c6af564dfac6c76c4c06a452d441cc2b9c22772e3b5058a7e5c08a9323fbf5c39ee4d1699bd50c617bb29d45ed4004e19a39874ba2abc447a7147745ac6bff828c7a784077a22e68ff8ad81a931186dbb0f5bab04f2628d92e8267df7fa8a8242ccc8c6e473eea48466a8d2ee568e850028521e6952d89cebee97233609c08abb4cc0b70cedd5892e9dc674434a5475733109e1c3a510784ba60c0ea2c33ca9cb91db78276cb9dc68c519fad927acd2af6bc7dafaed992d60a1585265ee0654bb669178d8292b43cf40a3603a2c99e9291914b51895492b72bd22f3f525caef2363012db61037618e230c234a09da042e03ae2d0965f8c578c07c170f72533feea4676c063129b9b267d1cfca816b31848ca9866905f2f3c20a6a9e9889d5d6ddba2c9a1ece39748afb7792a7457b4fc9aabcc60ed580e32adcb229357ac804bf13a385eff6bb8f4fd6880e46fb4ccbc4a66fdb6a5d0aa25cf010e477c6d23eda4062b9640629e1ecc5f966245ca5a4ad9428f791478a6a6622c8e766620582981e43cfc7df6816f68298ac17dacea34c0ab3f826ce3dd0210ae3539e0605099dca5a68eb2bd8009ffb225ad41eaddb6b9aef19bce3fb0f32f3e9daf203aa872cd29483d2f1b3d15ecf01424107f2e6e132caf122812da30c5cfac762af0390dbffe9daecf3d410b45a03d1cebc30920911a8b5f8958509b054dfd33b8a05c0c14e4829ccb968fe71b29de8fcc2a635ea4609bea4af66d856f7ace6d8e8a4372b370cbba8e813c992fffa4656c0002e23e05596b27bdcbc61163313f6173d7111a6e4fef22f8a0b2f8c8f7d3187d66add561bab497222da7173069f1e8a5bd084467b7e36e274e87ab7ded8e8c1268d8e3926e09438227eeff645c77cb1beafe811dc6f0625def6e7050d7f121aa7a7b7735c44c307131ac23750edb84a565f9a49643120147dd8a340a7cd9073146a413f3c3a3a733a200d5ded95d2bd89da101c48c98bbcf38f47f8f00f3fb19b24857f12ee9519daffd3126e2f862c788604eff14580afa32895a7366339b00916010ed1eac8c914dbe84d56598bda2d2a05d0ab4505abde5d0c4f61cd40fa7851e89a8ca2236b62bbe79f87c24c8ab1ddf6bd667cb14f4fe8e43e3feac87a1a76600563ada82f67b893a241332b9fa16ee7920eaf3d6f84384bf0e40b8c0c71a2e0fe203da3a22d82501d95dfee402a5e44e24267d7e776b3671251e8b5561d328fc1d34e9974aaa0749b25e0e3cb40f6c601fa344715d98012d51e1535f6f74aefac4463152398b09a50c765c4b45f26caf1da9fcc88721aa17e61a4a71a7190ce7bd92174adaae244f3acd556d41ea5671342ec336b27bb233acc763ce6cb1a40de564acbe481e896ea1319a2e7e51180ad12d5d6b609aeabd8efe39a9982ecaf8a699865cc85326d68f3a621d92a4d46cedf382912fb26320149ed12179e51794e384efffb2ed7549fa420eff7dcaa3708cb230ce9ec98d90488ce6de4bf6e7c764d3cc1bedccc7c136e82b40fb9332074e130f99caf947907759f2a42d37eb8aba845b2b97c565ff0de500e0e83fa5c5d2c39f275009275da273d06973490394637c065b302472ed81446400cde628eeaed92cbf1d758c5b341497fa10278ea69bde98ce6366ae3c9904ae2058d16d3804d7eef7cb6fe9d48700c248fc3aa1b38396c3d4738182c995c510328837620a369c3f518e3c04e5209bf498d78b63440b1ccc094aad215992987051f2f53b2e179a395109405a079c18addef0bd4d6563134d2fe1fbdd90f84f90c22b0cf08e104dda5b81a14df2ca972000ea10f39c9577695d463d1c2e2690792b515a2e740199160bdf071d75595b61461e587fa2f912178f0825d4039258cde16aa208da3577fb9cff86440fc102e9378687c26fcbc84734e3777c311e29772cd0663891c1f5452dc2e09902c4ddec3007c8d23be654ab154b42c305fce04e9dcde946019be544c18a7c3ff94001cd6b07f6196ebbcc4ac94ba4410f125cbfc1b9dee13ecbc5d822ffb629823593253d4bbd89acbc5c48096d364c285eb2a6d24378bd7773dff70fb616ac545009c9d238f8297eef7ef376f1a14525659efd2f99fbf8859f51b4337026e8e6dbd13af77b7660403e7451745b3abbbbe57dd3ba6bb2e5411cfcfb4e7cbd1826ed1248e4643cbb71b90019c769a6855fa9a2021b6098f6ae4bee6d57ce1c201f4a3323b8d5859dc95f57d4c755f6e38f1c3fba22f6822a0733c2460f742f647ccd7298f7bd22e98e4c4e9db56c05a5f609e5e341db885cc5f77dd3d5919b67ea6e7fd4af73c917b6a1d4ee6182f2f4f94610ef2aef1d429da981ee0f921300b750a1b66a1224de2620e979fa47da2b044e08c3a53deace8786cf58157780ea245106fe614b9db154738ee1ee4b188714bfe828994a5ae8ee5e40e0c06bfe1c144b945b48ead78439139ec1de3be187b75380cb27294ffd7e449f77e6c674dc6542c1a1bc15791f7a986157b4266687b166bbe1506756117c0cd232a0871268c214da33764ed64d7b2b2d84b66c75c0c874346401c491801a50adf018307e717d9327448507dc6f1cc790e25b1aa558c08df67f61f50ef9b472e22ae3964a4a63693c7e7e7a0e3a1e1092033168142ec5647d5a4d6fe4f74a6b0e2167a3d2f51b6a7c8557bc2d399787c75d5edeee366a153902ccf170634fc781b66d9c3d317a87269230918d461e6d7921539bec17d39177a05aa3cf9c25a7aac81cfc1c1f20d98ae9b5a5247aef50a4adfec47aabf5bddd39bd71038782247d98223f6cfa807590b706df6242c8771c067c7e26c1739604d934b90d93b7010b360bddaae71e43d9207c0ed9993e726d3f9296933038880b8d861fd125a947c8e4d45d7c904b37e2b4c174df483ed1f1f3ad2e900afbe603b210a31dde2bed0ea4ce0e8cba0057446a317383157a6f5e337c948d3280602cd1b2a2b4d0a9453127a9cffb84c0bbdeaab33ab0b004db37f6b4a47ae1ab77f2b3d550f80c4b23ba6afbcc8f7e7c3e5524f69544dd2bf004000cfc34566e57993b9452003746a229651f70fcedb420f67d90dd6ff117e95e5020a1ad6e6eeac413b1ba92aa109fa4356babcb962cc8b68056ba63d5005c68cda7451c3d660882a2c4852dacc49118b05fb3dadddb68831480b3139966caccdf9e17de198a3884f66ec1dad695dcceb607b42d038f0fb0a120565bd4e0ba3c84f6f471d1bab1169cc3f705a951dbe38d1d6dde7dfd51eb6e898716bc2d7f6021c5252107e63f13784c5f60c55992f4f1bdb67b8779f1cbd91dcc62d8e6121500e87fabaa09ddd5a7758204a5df0ea315c3af090c9693392b11853f86c6e99db66d99131d64cd4f924e71763aa654eb957876b741eb17afa0bdda90b0dc23c393b1df7617b065006c95dc473038a294b2ba8a4c7147039e1758667a919e4b4d8b062342c077103c8fb5008b270dd4e429e77ae3abe6cd8a4adf60aacd02058615991b53a058fc41cd0ec827535d738aeadd532e74d3197b4d364e56c1f2aa5c50e82d3624748549df16fce7630bc3d6b4b6d717bfcf6f746f409fda0727237826318235d7872edb85333c87ca61ea7fba288c6f51f11afda62f63e820e1781195aeffc1c4d95648e6c795a1dc7dd50f35dc2e4b6bc4a21c8f86bded7855a7b83751f1805d92f14f26ecac9260b40dd8f81679a3dee124d85ab2e7152b98f36f8d18cc4247a85312f5d4aef024bb71b2bc8b43ad4a42da9aa0f00292b1157777d01e02dad39aab6b4234a7fa4a2aa59fcbdea27d79f9f222ee359357d8a040586e700e7311721df464d42c0f3a24398ebec2b0b661d97ab3222c28327fb0dde989769ad9a2c527fc78e6a232624aaa4179139ba708fb07265a7ba28cc78b087f867cf5914e270389cd27b0c04bfe261931824f9b5797ae6f708d9dc249c9153ae7ce67872c32e27e6c17a508d3588253d6f70e8fce806756483b1c051e2bd23e3196d69dd88ce1a4aa5b791ef86acdac4bc90edcd26ff3986a8cd05c69041c64888839a0506a7d4012415fb1bb65aa250db87d3c14b3493fcc23d6e3770ff3cecafa773ab9434b40d1543e0a1fb8d09d2b7d77761b2171444bb37aae941c2cbda67f696c557a9bbc177c1e29e1a42659a2f9c1f19de94cef5b6f106f162a8cfcf1ccc9bd1bdc8fcc7beae88871b7581b53dd07af6877f01985f9b7e1d23b154859c552bed01496ccdaca2d6ffef457512832c19c07e0c641c51c1750c2de79dc0b9b596251013155d15735ec230cb3f1d5a79e14113d143480314ede75bc9721693fea4f5691bdf56855825cb6978889720aa2df50f9f092efe915c4cef5cb3e29664715263e5337b0850543f1756c640420fc63e0d887411cc7a8251de7fe0611fbea150764c9f151a05b5b2b18f5a77fa888c5b9829800ef6bd191a8de4f06fa343e9c5053d42f8de4b24236fdf94c6dc2910ae4a41048799841ee418bbe334b4ca8f92b9eee6cf5e2d24a244f1ca03a7756a09d72dadd78df87a6a1c29df2fcac8c7676e47b919707aac4e35e17b08814da0c816c8eff04ea875bccd1875bf17edd37538fec27e0597abdbc7b2da270a573091cc09d4ac9059e4944880247719425b815ad3b2912c46716e09e968a7e63f6b00c00b11b569530ce64b28a69359466f2307e93e9dd7d4c251a2e2ba9296ac030aaa98493c45eef2a72bec16e0b3107d19257cadc6a5b5234c2f9637ab27fdf77546bf272d5dc9c559dd37a440158c813838a8c857c8a492fe0efa78b19cf4a0fc1a79ee3537decb8e9d9a09ac7d9ddd96bda409bcd4d21a13ec59ee875ce9410348f531e2253e1656eba5d3a34140c9de6cf929ddb2a958e82a1d4d7c52ab300afa9cbd481248db088e2c36e0347dd63d0bfdf62e361d6a77803cc3ce730960c7260dd1cf4adb38e71a2b704b8d82cce1b8b1691cec9ed5de4aa88a74ea1316307f5edb333c80b059adcdf01b404aff12bf67d7caa7c411bb01544f83167e7841ae30fe3d8b2167d6a4270379d51343d0f2575d8e7020041a385fefc049d04dc4c77689c00d04f327302db5ff34f10c1f2d2879f4d1dac90ddbd95ad75f1d7b176269a6ff92e8f8f54419b6c0076161397bfb8c28c41ddd5260786101429384265766ef4608c33c3e34013ed9a7e8200d5d61eaf6cf2b3e779c0fc52a3466107699ac41315dab5f35b47402b57df65cd5d3b9464479f174c00525a230b6bb858ab257f70f19332b93692139dcc9a773d1542f9d15afba386df238b6801bed71226b38ffd64de14880dc9d8fe2facbe462d6b55024b75fffe5da779913a36d84a0a27039bc9f3da5e66e78502f07570e40a6c844cf298a51617168a3db2639bcec3b7ce656fd8b92295c4d7bd412104637c508bca99cbc</script>
-  <div class="hbe hbe-content">
-    <div class="hbe hbe-input hbe-input-default">
-      <input class="hbe hbe-input-field hbe-input-field-default" type="password" id="hbePass">
-      <label class="hbe hbe-input-label hbe-input-label-default" for="hbePass">
-        <span class="hbe hbe-input-label-content hbe-input-label-content-default">Hey, password is required here.</span>
-      </label>
-    </div>
-  </div>
-</div>
-<script data-pjax src="/lib/hbe.js"></script><link href="/css/hbe.style.css" rel="stylesheet" type="text/css">]]></content>
-      <categories>
-        <category>Nginx</category>
-      </categories>
-      <tags>
-        <tag>Nginx</tag>
       </tags>
   </entry>
 </search>

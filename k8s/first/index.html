@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"codeman.club","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Kubernetes">
+<meta property="og:type" content="article">
+<meta property="og:title" content="云原生-如何在本机搭建小巧完备的kubernetes环境">
+<meta property="og:url" content="https://codeman.club/k8s/first/index.html">
+<meta property="og:site_name" content="Coding-Nonfishz">
+<meta property="og:description" content="Kubernetes">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://codeman.club/load_images/k8s_1_1.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s_1_2.png">
+<meta property="article:published_time" content="2022-11-04T17:13:58.000Z">
+<meta property="article:modified_time" content="2022-11-07T02:51:36.153Z">
+<meta property="article:author" content="Nonfishz">
+<meta property="article:tag" content="Kubernetes">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://codeman.club/load_images/k8s_1_1.png">
+
+<link rel="canonical" href="https://codeman.club/k8s/first/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>云原生-如何在本机搭建小巧完备的kubernetes环境 | Coding-Nonfishz</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Coding-Nonfishz" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Coding-Nonfishz</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://codeman.club/k8s/first/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpeg">
+      <meta itemprop="name" content="Nonfishz">
+      <meta itemprop="description" content="It's time.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Coding-Nonfishz">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          云原生-如何在本机搭建小巧完备的kubernetes环境
+        </h1>
+
+        <div class="post-meta">
+	  
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-11-05 01:13:58" itemprop="dateCreated datePublished" datetime="2022-11-05T01:13:58+08:00">2022-11-05</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-11-07 10:51:36" itemprop="dateModified" datetime="2022-11-07T10:51:36+08:00">2022-11-07</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index"><span itemprop="name">Kubernetes</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>2.3k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>2 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Kubernetes"><a href="#Kubernetes" class="headerlink" title="Kubernetes"></a>Kubernetes</h2><span id="more"></span>
+
+<p><a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/tasks/tools/">tools</a></p>
+<h3 id="kind"><a href="#kind" class="headerlink" title="kind"></a>kind</h3><ul>
+<li>基于Docker，意思是”Kubernetes in Docker“。它功能少，用法简单，因此运行速度快，容易上手。</li>
+<li>缺少很多Kubernetes标准功能，例如仪表盘、网络插件，也很难定制化。</li>
+<li>适合做快速开发测试，不太适合学习研究。</li>
+</ul>
+<h3 id="minikube"><a href="#minikube" class="headerlink" title="minikube"></a>minikube</h3><ul>
+<li>”迷你“版本的Kubernetes，紧跟Kubernetes版本更新，同时也兼容较旧的版本（最多只到之前的6个小版本）。</li>
+<li>小而美，可执行文件仅有不到100M，运行镜像也不过1GB，这么小的空间却集成了Kubernets的绝大多数功能。</li>
+<li>不仅有核心的容器编排功能，还有丰富的插件，例如Dashboard、GPU、Ingress、Istio、Kong、Registry等。</li>
+</ul>
+<h4 id="如何搭建minikube环境"><a href="#如何搭建minikube环境" class="headerlink" title="如何搭建minikube环境"></a>如何搭建minikube环境</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Intel x86_64</span> </span><br><span class="line">curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64</span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">Apple arm64</span></span><br><span class="line">curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-arm64</span><br><span class="line"></span><br><span class="line">sudo install minikube /usr/local/bin/</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">查看版本号，验证是否安装成功</span></span><br><span class="line">minikube version</span><br></pre></td></tr></table></figure>
+
+<h4 id="kubectl"><a href="#kubectl" class="headerlink" title="kubectl"></a>kubectl</h4><p>minikube只能搭建Kubernete环境，要操作Kubernets，还需要专门的客户端工具kubectl</p>
+<p>类似于docker，kubectl也是一个命令行工具，作用也类似，与Kubernets后台服务通信，把命令转发给Kubernets，实现容器和集群的管理功能</p>
+<p>kubectl是一个与Kubernets、minikube彼此独立的项目，所以不包含在minikube里，但minikube提供了安装它的简化方式：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">minikube kubectl</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">该命令会把与当前Kubernets版本匹配的kubectl下载下来，存放在内部目录（例如.minikube/cache/linux/arm64/v1.23.3）</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>所以，在minikube环境里，会用到两个客户端：minikube管理Kubernets集群环境，kubectl操作实际的kubernetes功能，和Docker比起来有点复杂。</p>
+<img src="/load_images/k8s_1_1.png" alt="image-20221105013324401" style="zoom:50%;" />
+
+
+
+<h4 id="验证minikube环境"><a href="#验证minikube环境" class="headerlink" title="验证minikube环境"></a>验证minikube环境</h4><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">minikube start --kubernetes-version=v1.23.3</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">minikube start会从Docker Hub上拉取镜像，以当前最新版本的Kubernetes启动集群。</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">--kubernetes-version，明确指定要使用的Kubernetes版本</span></span><br><span class="line"><span class="meta prompt_"></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">注意：</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">如果以上命令执行后，镜像拉取失败，那么先执行minikube delete</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">然后执行minikube start --kubernetes-version=v1.23.3 --image-mirror-country=<span class="string">&#x27;cn&#x27;</span> --force</span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">不能用root账号，使用普通用户加上--force</span></span><br></pre></td></tr></table></figure>
+
+<p>现在Kubernets集群就在本地运行了，可以使用以下命令查看集群的状态：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">minikube status</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">结果</span></span><br><span class="line">minikube</span><br><span class="line">type: Control Plane</span><br><span class="line">host: Running</span><br><span class="line">kubelet: Running</span><br><span class="line">apiserver: Running</span><br><span class="line">kubeconfig: Configured</span><br><span class="line"></span><br><span class="line">minikube node list</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">结果</span></span><br><span class="line">minikube	192.168.49.2</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，Kubernetes集群里现在只有一个节点，名字就叫：minikube，类型是Control Plane，里面有三个服务：host、kubelet、apiserver；IP地址是192.168.49.2。</p>
+<p>可以使用命令minikube ssh登录到这个节点：</p>
+<p><img src="/load_images/k8s_1_2.png" alt="image-20221107102226838"></p>
+<h4 id="kubectl命令"><a href="#kubectl命令" class="headerlink" title="kubectl命令"></a>kubectl命令</h4><p>使用minikube自带的kubectl有一点形式上的限制，要在前面加上minikube前缀，后面再有个–，例如：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl version #这条命令还不能直接用，要用下面这种写法</span><br><span class="line">minikube kubectl -- version</span><br></pre></td></tr></table></figure>
+
+<p>为了避免这个麻烦，使用alias别名功能，写到当前用户目录下的.bashrc：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">alias kubectl=&quot;minikube kubectl --&quot;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source .bashrc</span><br></pre></td></tr></table></figure>
+
+<p>使用kubectl命令补全功能</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source &lt;(kubectl completion bash)</span><br></pre></td></tr></table></figure>
+
+<p>现在就可以使用kubectl了：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">kubectl version --short</span><br><span class="line"></span><br><span class="line">Client Version: v1.23.3</span><br><span class="line">Server Version: v1.23.3</span><br></pre></td></tr></table></figure>
+
+<h4 id="运行一个Nginx应用"><a href="#运行一个Nginx应用" class="headerlink" title="运行一个Nginx应用"></a>运行一个Nginx应用</h4><p>命令与docker一样，也是run，不过形式有一点区别，需要用–image指定镜像，然后Kubernetes会自动拉取并运行：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl run ngx --image=nginx:alpine</span><br></pre></td></tr></table></figure>
+
+
+
+<p>Kubernetes中的Pod概念，可以理解为”穿了马甲“的容器，查看Pod列表：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">kubectl get pod</span><br><span class="line"></span><br><span class="line">NAME   READY   STATUS    RESTARTS   AGE</span><br><span class="line">ngx    1/1     Running   0          2d9h</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，在Kubernetes集群里有一个ngx的Pod在运行，到此我们这个单节点的minikube环境已经搭建成功了。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Nonfishz
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://codeman.club/k8s/first/" title="云原生-如何在本机搭建小巧完备的kubernetes环境">https://codeman.club/k8s/first/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Kubernetes/" rel="tag"># Kubernetes</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/once/description/" rel="prev" title="Description">
+      <i class="fa fa-chevron-left"></i> Description
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Kubernetes"><span class="nav-number">1.</span> <span class="nav-text">Kubernetes</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#kind"><span class="nav-number">1.1.</span> <span class="nav-text">kind</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#minikube"><span class="nav-number">1.2.</span> <span class="nav-text">minikube</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E6%90%AD%E5%BB%BAminikube%E7%8E%AF%E5%A2%83"><span class="nav-number">1.2.1.</span> <span class="nav-text">如何搭建minikube环境</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#kubectl"><span class="nav-number">1.2.2.</span> <span class="nav-text">kubectl</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%AA%8C%E8%AF%81minikube%E7%8E%AF%E5%A2%83"><span class="nav-number">1.2.3.</span> <span class="nav-text">验证minikube环境</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#kubectl%E5%91%BD%E4%BB%A4"><span class="nav-number">1.2.4.</span> <span class="nav-text">kubectl命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E4%B8%80%E4%B8%AANginx%E5%BA%94%E7%94%A8"><span class="nav-number">1.2.5.</span> <span class="nav-text">运行一个Nginx应用</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Nonfishz"
+      src="/images/avatar.jpeg">
+  <p class="site-author-name" itemprop="name">Nonfishz</p>
+  <div class="site-description" itemprop="description">It's time.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">18</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/nonfishz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;nonfishz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:nonfishz@163.com" title="E-Mail → mailto:nonfishz@163.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Nonfishz</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">68k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">1:01</span>
+</div>
+<!--
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+-->
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  <script defer src="/lib/three/three.min.js"></script>
+    <script defer src="/lib/three/three-waves.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
