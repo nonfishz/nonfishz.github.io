@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"codeman.club","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Pod：Kubernetes最核心的概念">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes系列（四）—— Pod">
+<meta property="og:url" content="https://codeman.club/k8s/pod/index.html">
+<meta property="og:site_name" content="Coding-Nonfishz">
+<meta property="og:description" content="Pod：Kubernetes最核心的概念">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://codeman.club/load_images/k8s_4_1.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s_4_2.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s_4_3.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s_4_4.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s_4_5.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s_4_6.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s_4_7.png">
+<meta property="article:published_time" content="2022-11-07T14:38:36.000Z">
+<meta property="article:modified_time" content="2022-11-08T04:49:53.870Z">
+<meta property="article:author" content="Nonfishz">
+<meta property="article:tag" content="Kubernetes">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://codeman.club/load_images/k8s_4_1.png">
+
+<link rel="canonical" href="https://codeman.club/k8s/pod/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Kubernetes系列（四）—— Pod | Coding-Nonfishz</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="Coding-Nonfishz" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Coding-Nonfishz</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://codeman.club/k8s/pod/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpeg">
+      <meta itemprop="name" content="Nonfishz">
+      <meta itemprop="description" content="It's time.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Coding-Nonfishz">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Kubernetes系列（四）—— Pod
+        </h1>
+
+        <div class="post-meta">
+	  
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-11-07 22:38:36" itemprop="dateCreated datePublished" datetime="2022-11-07T22:38:36+08:00">2022-11-07</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-11-08 12:49:53" itemprop="dateModified" datetime="2022-11-08T12:49:53+08:00">2022-11-08</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index"><span itemprop="name">Kubernetes</span></a>
+                </span>
+            </span>
+
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>4.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>4 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Pod：Kubernetes最核心的概念"><a href="#Pod：Kubernetes最核心的概念" class="headerlink" title="Pod：Kubernetes最核心的概念"></a>Pod：Kubernetes最核心的概念</h2><span id="more"></span>
+
+<h3 id="为什么要有Pod"><a href="#为什么要有Pod" class="headerlink" title="为什么要有Pod"></a>为什么要有Pod</h3><p><img src="/load_images/k8s_4_1.png" alt="k8s_4_1"></p>
+<p>Pod原意是“豌豆荚”，后来又延伸出“舱室”“太空舱”等含义，图片中，形象的来说Pod就是包含了多组件、成员的一种结构。</p>
+<p>容器技术，让进程在一个“沙盒”环境里运行，具有良好的隔离性，对应用时一个非常好的封装。</p>
+<p>不过，当容器技术进入到现实的生产环境中时，这种隔离性就带来了一些麻烦。因为很少有应用时完全独立运行的，经常需要几个进程互相协作才能完成任务。</p>
+<p>那么把多个应用都放到一个容器里运行可不可以呢？</p>
+<p>当然可以，但这并不是一种好做法。因为容器的理念是对应用的独立封装，它里面就应该是一个进程、一个应用，如果里面有多个应用，不仅违背了容器的初衷，也会让容器更难以管理。</p>
+<p><strong>为了解决这样多应用联合的问题，同时还不破坏容器的隔离，就需要再容器外面再建立一个“收纳舱”</strong>，让多个容器保持相对独立，又能够小范围共享网络、存储等资源，而且永远是“绑在一起”的状态。</p>
+<p>所以，Pod的概念也就呼之欲出了，容器正式“豆荚”里那些小小的“豌豆”，可以在Pod的YAML里看到，“spec.containers”字段其实是一个数组，里面允许定义多个容器。</p>
+<h3 id="为什么Pod是Kubernetes的核心对象"><a href="#为什么Pod是Kubernetes的核心对象" class="headerlink" title="为什么Pod是Kubernetes的核心对象"></a>为什么Pod是Kubernetes的核心对象</h3><p>因为Pod是对容器的“打包”，里面的容器是一个整体，总是能够一起调度、一起运行，绝对不会出现分离的情况，而且Pod属于Kubernetes，可以在不触碰下层容器的情况下任意定制修改。所以有了Pod这个抽象概念，Kubernetes在集群级别上管理应用就会“得心应手”了。</p>
+<p>Kubernetes让Pod去编排处理容器，然后把Pod作为应用调度部署的<strong>最小单位</strong>，Pod也因此成为了Kubernetes世界里的“原子”（当然这个原子内部是有结构的，不是铁板一块），基于Pod就可以构建出更多更复杂的业务形态了。</p>
+<p><img src="/load_images/k8s_4_2.png" alt="k8s_4_2"></p>
+<p>从图中可以看出，所有的Kubernetes资源都直接或者间接的依附在Pod之上，所有的Kubernetes功能都必须通过Pod来实现，所以Pod理所当然地成为了Kubernetes的核心对象。</p>
+<h3 id="如何用YAML描述Pod"><a href="#如何用YAML描述Pod" class="headerlink" title="如何用YAML描述Pod"></a>如何用YAML描述Pod</h3><p>我们始终可以使用<strong>kubectl explain</strong>来查看任意字段的详细说明。</p>
+<p>Pod是API对象，所以它必然也有apiVersion、kind、metadata、spec这四个基本组成部分。</p>
+<p>apiVersion和kind这两个字段很简单，对于Pod来说分别是固定值v1和Pod。</p>
+<p>而一般来说，“metadata”里应该有name和labels这两个字段。在使用Docker创建容器的时候，可以不给容器起名字，但在Kubernetes里，Pod必须要有一个名字，这也是Kubernetes里所有资源对象的一个约定。name只是一个基本的标识，信息有限，所以labels字段就派上了用处。它可以添加任意数量的key-value，给Pod贴上归类的标签，结合那么就更方便识别和管理了。</p>
+<p>比如，可以根据运行环境，使用标签env: dev&#x2F;test&#x2F;prod，或者根据所在的数据中心，使用标签region: north&#x2F;south，还可以根据应用在系统中的层次，使用tier: front&#x2F;middle&#x2F;back等等。</p>
+<p>下面这段YAML代码就描述了一个简单的Pod，名字是“busy-pod”，再附加上一些标签：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">busy-pod</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">owner:</span> <span class="string">nonfishz</span></span><br><span class="line">    <span class="attr">env:</span> <span class="string">demo</span></span><br><span class="line">    <span class="attr">region:</span> <span class="string">north</span></span><br><span class="line">    <span class="attr">tier:</span> <span class="string">back</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>“metadata”一般协商name和labels就足够了，而“spec”字段由于需要管理、维护Pod这个Kubernetes的基本调度单元，里面有非常多的关键信息，现在介绍最重要的“containers”。</p>
+<p>“containers”是一个数组，里面每一个元素又是一个container对象，也就是容器。</p>
+<p>和Pod一样，container对象也必须要有一个name表示名字，然后当然还要有一个image字段来说明它使用的镜像，这两个字段必须要有，否则Kubernetes会报告数据验证错误。</p>
+<p>container对象的字段：</p>
+<ul>
+<li><strong>ports</strong>：列出容器对外暴露的端口，和Docker的-p参数有点像</li>
+<li><strong>imagePullPolicy</strong>：指定镜像的拉取策略，可以是Always&#x2F;Never&#x2F;IfNotPresent，一般默认是IfNotPresent（Defaults to Always if :latest tag is specified。 只有lastest才是always）</li>
+<li><strong>env</strong>：定义container的环境变量，和Dockerfile里的ENV指令有点类似，但它是运行时指定的，更加灵活可配置</li>
+<li><strong>command</strong>：定义容器启动时要执行的命令，相当于Dockerfile里的ENTRYPOINT指令。</li>
+<li><strong>args</strong>：它是command运行时的参数，相当于Dockerfile里的CMD指令，这个命令和Docker的含义不同，要特别注意</li>
+</ul>
+<p>现在来编写“busy-pod”的spec部分，添加env、command、args等字段：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">busybox:latest</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">busy</span></span><br><span class="line">    <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">    <span class="attr">env:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">os</span></span><br><span class="line">        <span class="attr">value:</span> <span class="string">&quot;ubuntu&quot;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">debug</span></span><br><span class="line">        <span class="attr">value:</span> <span class="string">&quot;on&quot;</span></span><br><span class="line">    <span class="attr">command:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">/bin/echo</span></span><br><span class="line">    <span class="attr">args:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;$(os), $(debug)&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>这里为Pod指定使用镜像busybox:latest，拉取策略是IfNotPresent，然后定义了os和debug两个环境变量，启动命令是&#x2F;bin&#x2F;echo，参数里输出刚才定义的环境变量。</p>
+<p>把这份YAML文件和Docker命令对比一下，可以看出，YAML在spec.containers字段里用“声明式”把容器的运行状态描述的非常清晰准确，要比docker run那长长的命令行要整洁的多，对人、对机器都非常友好。</p>
+<h3 id="如何使用kubectl操作Pod"><a href="#如何使用kubectl操作Pod" class="headerlink" title="如何使用kubectl操作Pod"></a>如何使用kubectl操作Pod</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f busy-pod.yml</span><br><span class="line">kubectl delete -f busy-pod.yml</span><br></pre></td></tr></table></figure>
+
+
+
+<p>因为在YAML里定义了“name”字段，所以也可以再删除的时候直接指定名字来删除：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl delete pod busy-pod</span><br></pre></td></tr></table></figure>
+
+
+
+<p>和Docker不一样，Kubernetes的Pod不会在前台运行，只能在后台（相当于默认使用了参数-d），所以输出信息不能直接看到。我们可以用命令kubectl logs，它会把Pod的标准输出流信息展示给我们看，在这里就会显示出预设的两个环境变量值：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl logs busy-pod</span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s_4_3.png" alt="image"></p>
+<p>查看Pod列表和运行状态</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get pod</span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s_4_4.png" alt="image"></p>
+<p>从图片中发现这个Pod运行有点不正常，状态是“CrashLoopBackOff”，那么可以使用命令kubectl describe来检查它的详细状态，在调试排错时很有用：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl describe pod busy-pod</span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s_4_5.png" alt="image"></p>
+<p>通常只需要关注末尾的“Events”部分，它显示的是Pod运行过程中的一些关键节点事件。</p>
+<p>对于这个busy-pod，因为它只执行了一条echo命令就退出了，而Kubernetes默认会重启Pod，所以就会进入一个反复停止 - 启动的循环错误状态。</p>
+<p>Kubernetes里运行的应用大部分都是不会主动退出的服务，我们可以把这个busy-pod删掉，创建一个ngx-pod.yml，启动一个Nginx服务，这才是大多数Pod的工作方式。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">ngx-pod</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">env:</span> <span class="string">demo</span></span><br><span class="line">    <span class="attr">owner:</span> <span class="string">nonfishz</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">nginx:alpine</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">ngx</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">80</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f ngx-pod.yml</span><br><span class="line"></span><br><span class="line">kubectl get pod #可以看到ngix-pod处于Running状态</span><br><span class="line"></span><br><span class="line">kubectl log ngx-pod #可以查看Nginx的运行日志</span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s_4_6.png" alt="image"></p>
+<p>kubectl cp 可以把本地文件拷贝进Pod</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;Hello Pod&quot; &gt;&gt; tmp.txt</span><br><span class="line">kubectl cp tmp.txt ngx-pod:/tmp</span><br></pre></td></tr></table></figure>
+
+
+
+<p>kubectl exec进入Pod内部执行Shell命令，需要再Pod后面加上–，把kubectl的命令和Shell命令分隔开</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl exec -it ngx-pod -- sh</span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s_4_7.png" alt="image"></p>
+<p>虽然Pod是Kubernetes的核心概念，非常重要，但事实上在Kubernetes里通常并不会直接创建Pod，因为它支队容器做了简单的包装，比较脆弱，离复杂的业务需求还有些距离，需要Job、CronJob、Deployment等其他对象增添更多的功能才能投入生产使用。</p>
+<p>Pod内部有一个名为infra的容器，它实际上代表了Pod，维护着Pod内多容器共享的主机名、网络和存储。infra容器的镜像叫“pause”，非常小，只有不到500KB。</p>
+<p>metadata里的标签不能任意写，必须要符合域名规范（FQDN）。</p>
+<p>对于确实不需要重启的Pod，可以配置字段“restartPolicy: Never”。</p>
+<p>kubectl get pod命令结果中的“READY”栏显示的是Pod内部的容器状态，格式是“x&#x2F;y”，表示Pod里总共定义了y个容器，其中x个是正常的（ready）。</p>
+<p>准确的说，kubectl cp 、kubectl exec操作的应该是Pod里面的容器，需要用-c参数指定容器名，不过因为大多数Pod里只有一个容器，所以就省略了。</p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Nonfishz
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://codeman.club/k8s/pod/" title="Kubernetes系列（四）—— Pod">https://codeman.club/k8s/pod/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Kubernetes/" rel="tag"># Kubernetes</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/k8s/yaml/" rel="prev" title="Kubernetes系列（三）—— YAML">
+      <i class="fa fa-chevron-left"></i> Kubernetes系列（三）—— YAML
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Pod%EF%BC%9AKubernetes%E6%9C%80%E6%A0%B8%E5%BF%83%E7%9A%84%E6%A6%82%E5%BF%B5"><span class="nav-number">1.</span> <span class="nav-text">Pod：Kubernetes最核心的概念</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%9C%89Pod"><span class="nav-number">1.1.</span> <span class="nav-text">为什么要有Pod</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88Pod%E6%98%AFKubernetes%E7%9A%84%E6%A0%B8%E5%BF%83%E5%AF%B9%E8%B1%A1"><span class="nav-number">1.2.</span> <span class="nav-text">为什么Pod是Kubernetes的核心对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E7%94%A8YAML%E6%8F%8F%E8%BF%B0Pod"><span class="nav-number">1.3.</span> <span class="nav-text">如何用YAML描述Pod</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8kubectl%E6%93%8D%E4%BD%9CPod"><span class="nav-number">1.4.</span> <span class="nav-text">如何使用kubectl操作Pod</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Nonfishz"
+      src="/images/avatar.jpeg">
+  <p class="site-author-name" itemprop="name">Nonfishz</p>
+  <div class="site-description" itemprop="description">It's time.</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/nonfishz" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;nonfishz" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:nonfishz@163.com" title="E-Mail → mailto:nonfishz@163.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Nonfishz</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+      <span class="post-meta-item-text">站点总字数：</span>
+    <span title="站点总字数">78k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">1:11</span>
+</div>
+<!--
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+-->
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  <script defer src="/lib/three/three.min.js"></script>
+    <script defer src="/lib/three/three-waves.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

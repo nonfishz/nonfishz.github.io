@@ -8,8 +8,254 @@
 ]]></content>
   </entry>
   <entry>
-    <title>云原生-如何在本机搭建小巧完备的kubernetes环境</title>
-    <url>/k8s/first/</url>
+    <title>Kubernetes系列（四）—— Pod</title>
+    <url>/k8s/pod/</url>
+    <content><![CDATA[<h2 id="Pod：Kubernetes最核心的概念"><a href="#Pod：Kubernetes最核心的概念" class="headerlink" title="Pod：Kubernetes最核心的概念"></a>Pod：Kubernetes最核心的概念</h2><span id="more"></span>
+
+<h3 id="为什么要有Pod"><a href="#为什么要有Pod" class="headerlink" title="为什么要有Pod"></a>为什么要有Pod</h3><p><img src="/load_images/k8s_4_1.png" alt="k8s_4_1"></p>
+<p>Pod原意是“豌豆荚”，后来又延伸出“舱室”“太空舱”等含义，图片中，形象的来说Pod就是包含了多组件、成员的一种结构。</p>
+<p>容器技术，让进程在一个“沙盒”环境里运行，具有良好的隔离性，对应用时一个非常好的封装。</p>
+<p>不过，当容器技术进入到现实的生产环境中时，这种隔离性就带来了一些麻烦。因为很少有应用时完全独立运行的，经常需要几个进程互相协作才能完成任务。</p>
+<p>那么把多个应用都放到一个容器里运行可不可以呢？</p>
+<p>当然可以，但这并不是一种好做法。因为容器的理念是对应用的独立封装，它里面就应该是一个进程、一个应用，如果里面有多个应用，不仅违背了容器的初衷，也会让容器更难以管理。</p>
+<p><strong>为了解决这样多应用联合的问题，同时还不破坏容器的隔离，就需要再容器外面再建立一个“收纳舱”</strong>，让多个容器保持相对独立，又能够小范围共享网络、存储等资源，而且永远是“绑在一起”的状态。</p>
+<p>所以，Pod的概念也就呼之欲出了，容器正式“豆荚”里那些小小的“豌豆”，可以在Pod的YAML里看到，“spec.containers”字段其实是一个数组，里面允许定义多个容器。</p>
+<h3 id="为什么Pod是Kubernetes的核心对象"><a href="#为什么Pod是Kubernetes的核心对象" class="headerlink" title="为什么Pod是Kubernetes的核心对象"></a>为什么Pod是Kubernetes的核心对象</h3><p>因为Pod是对容器的“打包”，里面的容器是一个整体，总是能够一起调度、一起运行，绝对不会出现分离的情况，而且Pod属于Kubernetes，可以在不触碰下层容器的情况下任意定制修改。所以有了Pod这个抽象概念，Kubernetes在集群级别上管理应用就会“得心应手”了。</p>
+<p>Kubernetes让Pod去编排处理容器，然后把Pod作为应用调度部署的<strong>最小单位</strong>，Pod也因此成为了Kubernetes世界里的“原子”（当然这个原子内部是有结构的，不是铁板一块），基于Pod就可以构建出更多更复杂的业务形态了。</p>
+<p><img src="/load_images/k8s_4_2.png" alt="k8s_4_2"></p>
+<p>从图中可以看出，所有的Kubernetes资源都直接或者间接的依附在Pod之上，所有的Kubernetes功能都必须通过Pod来实现，所以Pod理所当然地成为了Kubernetes的核心对象。</p>
+<h3 id="如何用YAML描述Pod"><a href="#如何用YAML描述Pod" class="headerlink" title="如何用YAML描述Pod"></a>如何用YAML描述Pod</h3><p>我们始终可以使用<strong>kubectl explain</strong>来查看任意字段的详细说明。</p>
+<p>Pod是API对象，所以它必然也有apiVersion、kind、metadata、spec这四个基本组成部分。</p>
+<p>apiVersion和kind这两个字段很简单，对于Pod来说分别是固定值v1和Pod。</p>
+<p>而一般来说，“metadata”里应该有name和labels这两个字段。在使用Docker创建容器的时候，可以不给容器起名字，但在Kubernetes里，Pod必须要有一个名字，这也是Kubernetes里所有资源对象的一个约定。name只是一个基本的标识，信息有限，所以labels字段就派上了用处。它可以添加任意数量的key-value，给Pod贴上归类的标签，结合那么就更方便识别和管理了。</p>
+<p>比如，可以根据运行环境，使用标签env: dev&#x2F;test&#x2F;prod，或者根据所在的数据中心，使用标签region: north&#x2F;south，还可以根据应用在系统中的层次，使用tier: front&#x2F;middle&#x2F;back等等。</p>
+<p>下面这段YAML代码就描述了一个简单的Pod，名字是“busy-pod”，再附加上一些标签：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">busy-pod</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">owner:</span> <span class="string">nonfishz</span></span><br><span class="line">    <span class="attr">env:</span> <span class="string">demo</span></span><br><span class="line">    <span class="attr">region:</span> <span class="string">north</span></span><br><span class="line">    <span class="attr">tier:</span> <span class="string">back</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>“metadata”一般协商name和labels就足够了，而“spec”字段由于需要管理、维护Pod这个Kubernetes的基本调度单元，里面有非常多的关键信息，现在介绍最重要的“containers”。</p>
+<p>“containers”是一个数组，里面每一个元素又是一个container对象，也就是容器。</p>
+<p>和Pod一样，container对象也必须要有一个name表示名字，然后当然还要有一个image字段来说明它使用的镜像，这两个字段必须要有，否则Kubernetes会报告数据验证错误。</p>
+<p>container对象的字段：</p>
+<ul>
+<li><strong>ports</strong>：列出容器对外暴露的端口，和Docker的-p参数有点像</li>
+<li><strong>imagePullPolicy</strong>：指定镜像的拉取策略，可以是Always&#x2F;Never&#x2F;IfNotPresent，一般默认是IfNotPresent（Defaults to Always if :latest tag is specified。 只有lastest才是always）</li>
+<li><strong>env</strong>：定义container的环境变量，和Dockerfile里的ENV指令有点类似，但它是运行时指定的，更加灵活可配置</li>
+<li><strong>command</strong>：定义容器启动时要执行的命令，相当于Dockerfile里的ENTRYPOINT指令。</li>
+<li><strong>args</strong>：它是command运行时的参数，相当于Dockerfile里的CMD指令，这个命令和Docker的含义不同，要特别注意</li>
+</ul>
+<p>现在来编写“busy-pod”的spec部分，添加env、command、args等字段：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">busybox:latest</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">busy</span></span><br><span class="line">    <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">    <span class="attr">env:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">os</span></span><br><span class="line">        <span class="attr">value:</span> <span class="string">&quot;ubuntu&quot;</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">debug</span></span><br><span class="line">        <span class="attr">value:</span> <span class="string">&quot;on&quot;</span></span><br><span class="line">    <span class="attr">command:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">/bin/echo</span></span><br><span class="line">    <span class="attr">args:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">&quot;$(os), $(debug)&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>这里为Pod指定使用镜像busybox:latest，拉取策略是IfNotPresent，然后定义了os和debug两个环境变量，启动命令是&#x2F;bin&#x2F;echo，参数里输出刚才定义的环境变量。</p>
+<p>把这份YAML文件和Docker命令对比一下，可以看出，YAML在spec.containers字段里用“声明式”把容器的运行状态描述的非常清晰准确，要比docker run那长长的命令行要整洁的多，对人、对机器都非常友好。</p>
+<h3 id="如何使用kubectl操作Pod"><a href="#如何使用kubectl操作Pod" class="headerlink" title="如何使用kubectl操作Pod"></a>如何使用kubectl操作Pod</h3><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f busy-pod.yml</span><br><span class="line">kubectl delete -f busy-pod.yml</span><br></pre></td></tr></table></figure>
+
+
+
+<p>因为在YAML里定义了“name”字段，所以也可以再删除的时候直接指定名字来删除：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl delete pod busy-pod</span><br></pre></td></tr></table></figure>
+
+
+
+<p>和Docker不一样，Kubernetes的Pod不会在前台运行，只能在后台（相当于默认使用了参数-d），所以输出信息不能直接看到。我们可以用命令kubectl logs，它会把Pod的标准输出流信息展示给我们看，在这里就会显示出预设的两个环境变量值：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl logs busy-pod</span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s_4_3.png" alt="image"></p>
+<p>查看Pod列表和运行状态</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get pod</span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s_4_4.png" alt="image"></p>
+<p>从图片中发现这个Pod运行有点不正常，状态是“CrashLoopBackOff”，那么可以使用命令kubectl describe来检查它的详细状态，在调试排错时很有用：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl describe pod busy-pod</span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s_4_5.png" alt="image"></p>
+<p>通常只需要关注末尾的“Events”部分，它显示的是Pod运行过程中的一些关键节点事件。</p>
+<p>对于这个busy-pod，因为它只执行了一条echo命令就退出了，而Kubernetes默认会重启Pod，所以就会进入一个反复停止 - 启动的循环错误状态。</p>
+<p>Kubernetes里运行的应用大部分都是不会主动退出的服务，我们可以把这个busy-pod删掉，创建一个ngx-pod.yml，启动一个Nginx服务，这才是大多数Pod的工作方式。</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">ngx-pod</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">env:</span> <span class="string">demo</span></span><br><span class="line">    <span class="attr">owner:</span> <span class="string">nonfishz</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">nginx:alpine</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">ngx</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">80</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f ngx-pod.yml</span><br><span class="line"></span><br><span class="line">kubectl get pod #可以看到ngix-pod处于Running状态</span><br><span class="line"></span><br><span class="line">kubectl log ngx-pod #可以查看Nginx的运行日志</span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s_4_6.png" alt="image"></p>
+<p>kubectl cp 可以把本地文件拷贝进Pod</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">echo &quot;Hello Pod&quot; &gt;&gt; tmp.txt</span><br><span class="line">kubectl cp tmp.txt ngx-pod:/tmp</span><br></pre></td></tr></table></figure>
+
+
+
+<p>kubectl exec进入Pod内部执行Shell命令，需要再Pod后面加上–，把kubectl的命令和Shell命令分隔开</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl exec -it ngx-pod -- sh</span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s_4_7.png" alt="image"></p>
+<p>虽然Pod是Kubernetes的核心概念，非常重要，但事实上在Kubernetes里通常并不会直接创建Pod，因为它支队容器做了简单的包装，比较脆弱，离复杂的业务需求还有些距离，需要Job、CronJob、Deployment等其他对象增添更多的功能才能投入生产使用。</p>
+<p>Pod内部有一个名为infra的容器，它实际上代表了Pod，维护着Pod内多容器共享的主机名、网络和存储。infra容器的镜像叫“pause”，非常小，只有不到500KB。</p>
+<p>metadata里的标签不能任意写，必须要符合域名规范（FQDN）。</p>
+<p>对于确实不需要重启的Pod，可以配置字段“restartPolicy: Never”。</p>
+<p>kubectl get pod命令结果中的“READY”栏显示的是Pod内部的容器状态，格式是“x&#x2F;y”，表示Pod里总共定义了y个容器，其中x个是正常的（ready）。</p>
+<p>准确的说，kubectl cp 、kubectl exec操作的应该是Pod里面的容器，需要用-c参数指定容器名，不过因为大多数Pod里只有一个容器，所以就省略了。</p>
+]]></content>
+      <categories>
+        <category>Kubernetes</category>
+      </categories>
+      <tags>
+        <tag>Kubernetes</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Kubernetes系列（三）—— YAML</title>
+    <url>/k8s/yaml/</url>
+    <content><![CDATA[<h2 id="YAML：Kubernetes世界里的通用语"><a href="#YAML：Kubernetes世界里的通用语" class="headerlink" title="YAML：Kubernetes世界里的通用语"></a>YAML：Kubernetes世界里的通用语</h2><span id="more"></span>
+
+<h3 id="声明式与命令式"><a href="#声明式与命令式" class="headerlink" title="声明式与命令式"></a>声明式与命令式</h3><p>Kubernetes使用的YAML语言有一个非常关键的特性，叫“声明式”（Declarative），对应的有另外一个词：“命令式”（Imperative）。</p>
+<p>大多数编程语言属于命令式，特点是交互性强，注重顺序和过程，你必须要告诉计算机每步该做什么，所有的步骤都列清楚，这样程序才能一步一步走下去。</p>
+<p>声明式与命令式相反，它不关心具体过程，更注重结果。不需要“教”计算机该怎么做，只告诉它一个目标状态，它自己就会想办法去完成任务，相比起来自动化、智能化程度更高。</p>
+<h3 id="什么是YAML"><a href="#什么是YAML" class="headerlink" title="什么是YAML"></a>什么是YAML</h3><p>创建于2001年，比XML晚了3年。</p>
+<p>YAML<a href="https://yaml.org/">官网</a></p>
+<p>阮一峰<a href="https://www.ruanyifeng.com/blog/2016/07/yaml.html">YAML</a> 具体用法可参考这一片文章</p>
+<p>YAML是JSON的超集，支持证书、浮点数、布尔、字符串、数组和对象等数据类型。任何合法的JSON文档也都是YAML文档。</p>
+<h3 id="什么是API对象"><a href="#什么是API对象" class="headerlink" title="什么是API对象"></a>什么是API对象</h3><p>作为一个集群操作系统，Kubernetes归纳总结了Google多年的经验，在理论层面抽象出了很多个概念，用来描述系统的管理运维工作，这些概念就叫做“API对象”。来源于apiserver。</p>
+<p>都有哪些API对象呢？</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">查看当前Kubernetes版本支持的所有对象</span></span><br><span class="line">kubectl api-resources </span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s_3_1.png" alt="image"></p>
+<p>NAME一栏，就是对象的名字。SHORTNAMES是简写，在使用kubectl命令的时候可以使用</p>
+<p>在使用kubectl命令的时候，可以加上一个参数–v&#x3D;9，它会显示出详细的命令执行过程，清楚地看到发出的HTTP请求</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get pod --v=9</span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s_3_2.png" alt="image"></p>
+<p>从图中可以看到，kubectl客户端等价于调用了curl，向8443端口发送了HTTP GET请求，URL是&#x2F;api&#x2F;v1&#x2F;namespaces&#x2F;default&#x2F;pods。</p>
+<p>这些API对象，全面地描述了集群的节点、应用、配置、服务、账号等等信息，apiserver会把它们都存储在数据库etcd里，然后kubelet、scheduler、controller-manager等组件通过apiserver来操作它们，就在API对象这个抽象层次实现了对整个集群的管理。</p>
+<h3 id="如何描述API对象"><a href="#如何描述API对象" class="headerlink" title="如何描述API对象"></a>如何描述API对象</h3><p>以YAML语言，使用“声明式”在Kubernetes里描述并创建API对象。</p>
+<p>使用kubectl run运行Nginx，这是命令式的：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">kubectl run ngx --image=nginx:alpine</span><br></pre></td></tr></table></figure>
+
+<p>把它改成声明式的YAML，说清楚想要的Nginx应用是什么样子，也就是“目标状态”，让Kubernetes自己去决定如何拉取镜像运行：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">ngx-pod</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">env:</span> <span class="string">demo</span></span><br><span class="line">    <span class="attr">owner:</span> <span class="string">nonfishz</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">nginx:alpine</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">ngx</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">80</span></span><br></pre></td></tr></table></figure>
+
+<p>这是一个Pod，使用nginx:alpine镜像创建一个容器，开放端口80，其他部分则是Kubernetes对API对象强制的格式要求了。</p>
+<p>因为API对象采用标准的HTTP协议，为方便理解，我们可以借鉴一下HTTP的报文格式，把API对象的描述分成“header”和“body”两部分。</p>
+<p>“header”包含API对象的基本信息，有三个字段：apiVersion、kind、metadata。</p>
+<ul>
+<li>apiVersion表示操作这种资源的API版本号，由于Kubernetes的迭代速度很快，不同的版本创建的对象会有差异，为了区分这些版本就需要使用apiVersion这个字段，比如v1、v1alpha1、v1beta1等等。</li>
+<li>kind表示资源对象的类型，这个应该很好理解，比如Pod、Node、Job、Service等等。</li>
+<li>metadata这个字段顾名思义，表示的是资源的一些“元信息”，也就是用来标记对象，方便Kubernetes管理的一些信息。</li>
+</ul>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">ngx-pod</span> <span class="comment">#给Pod起了个名字叫ngx-pod</span></span><br><span class="line">  <span class="attr">labels:</span> <span class="comment">#给Pod“贴”上了一些便于查找的标签，分别是env和owner</span></span><br><span class="line">    <span class="attr">env:</span> <span class="string">demo</span></span><br><span class="line">    <span class="attr">owner:</span> <span class="string">nonfishz</span></span><br></pre></td></tr></table></figure>
+
+<p>和HTTP协议一样，“header”里的apiVersion、kind、metadata这三个字段是任何对象都必须有的，而“body”部分则会与对象特定相关，每种对象会有不同的规格定义，在YAML里表现为spec字段（specification），表示我们对对象的“期望状态”（desired status）。</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">nginx:alpine</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">ngx</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">80</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>这份YAML文档完整的描述了一个类型是Pod的API对象，要求使用v1版本的API接口去管理，其他更具体的名字、标签、状态等细节都记录在了metadata和spec字段等里。</p>
+<p>创建、删除对象：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f ngx-pod.yml [--v=9]</span><br><span class="line">kubectl delete -f ngx-pod.yml [--v=9]</span><br></pre></td></tr></table></figure>
+
+<p>Kubernetes收到这份“声明式”的数据，再根据HTTP请求里的POST&#x2F;DELETE等方法，就会自动操作这个资源对象，至于对象在哪个节点上、怎么创建、怎么删除完全不用我们操心。</p>
+<h3 id="如何编写YAML"><a href="#如何编写YAML" class="headerlink" title="如何编写YAML"></a>如何编写YAML</h3><p><a href="https://kubernetes.io/docs/reference/kubernetes-api/">官方文档</a> API对象的所有字段都可以在里面找到。</p>
+<p>第一个技巧，kubectl api-resources命令，会显示出资源对象响应的API版本和类型。</p>
+<p>第二个技巧，kubectl explain，相当于Kubernetes自带的API文档，会给出对象字段的详细说明，这样就不必去网上查找了。</p>
+<p>比如想看Pod里的字段该怎么写：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">kubectl explain pod</span><br><span class="line">kubectl explain pod.metadata</span><br><span class="line">kubectl explain pod.spec</span><br><span class="line">kubectl explain pod.spec.containers</span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s_3_3.png" alt="image"></p>
+<p>第三个技巧，kubectl两个特殊的参数 –dry-run&#x3D;client和-o yaml，前者是空运行，后者是生成YAML格式，结合起来使用就会让kubectl不会有实际的创建动作，而只生成YAML文件。</p>
+<p>例如，生成一个Pod的YAML样板示例：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">kubectl run ngx --image=nginx:alpine --dry-run=client -o yaml</span><br><span class="line">#注：以上命令只会在终端输出yaml内容，如果需要生成文件，需要重定向到文件中 &gt;&gt; filename.yml</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">creationTimestamp:</span> <span class="literal">null</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">run:</span> <span class="string">ngx</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">ngx</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">nginx:alpine</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">ngx</span></span><br><span class="line">    <span class="attr">resources:</span> &#123;&#125;</span><br><span class="line">  <span class="attr">dnsPolicy:</span> <span class="string">ClusterFirst</span></span><br><span class="line">  <span class="attr">restartPolicy:</span> <span class="string">Always</span></span><br><span class="line"><span class="attr">status:</span> &#123;&#125;</span><br></pre></td></tr></table></figure>
+
+<p>接下来要做的就是查阅文档，添加或者删除字段来定制这个YAML。</p>
+<p>这个小技巧还可以再进化一下，把这段参数定义成Shell变量，用起来更方便：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">export out=&quot;--dry-run=client -o yaml&quot;</span><br><span class="line">kubectl run ngx --image=nginx:alpine $out</span><br></pre></td></tr></table></figure>
+
+]]></content>
+  </entry>
+  <entry>
+    <title>Kubernetes系列（二）—— 工作机制</title>
+    <url>/k8s/core/</url>
+    <content><![CDATA[<h2 id="Kubernetes工作机制"><a href="#Kubernetes工作机制" class="headerlink" title="Kubernetes工作机制"></a>Kubernetes工作机制</h2><span id="more"></span>
+
+<h3 id="Kubernetes基本架构图"><a href="#Kubernetes基本架构图" class="headerlink" title="Kubernetes基本架构图"></a>Kubernetes基本架构图</h3><p><img src="/load_images/k8s_2_1.png" alt="image"></p>
+<p>Kubernetes采用了现在流行的”控制面&#x2F;数据面“（Control Plane &#x2F; Data Plane）架构，集群里的计算机被称为”节点“（Node），可以是实机也可以是虚机，少量的节点用作控制面来执行集群的管理维护工作，其他的大部分节点都被划归数据面，用来跑业务应用。</p>
+<p>控制面节点在Kubernetes中叫做Master Node，一般简称为Master，它是整个集群里最重要的部分，可以说是Kubernetes的大脑和心脏。</p>
+<p>数据面的节点叫做Worker Node，一般旧简称为Worker或者Node，相当于Kubernetes的手和脚，在Master的指挥下干活。</p>
+<p>Node的数量非常多，构成了一个资源池，Kubernetes就在这个池里分配资源，调度应用。因为资源被”池化了，所以管理也就变的比较简单，可以在集群中任意添加或者删除节点。</p>
+<p>kubectl是Kubernetes的客户端工具，用来操作Kubernetes，但它位于集群之外，理论上不属于集群。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get node</span><br><span class="line"></span><br><span class="line">NAME       STATUS   ROLES                  AGE     VERSION</span><br><span class="line">minikube   Ready    control-plane,master   2d12h   v1.23.3</span><br></pre></td></tr></table></figure>
+
+<p>可以看到当前的minikube集群里只有一个Master，那Node怎么不见了？</p>
+<p>这是因为Master和Node的划分不是绝对的。当集群规模较小，工作负载较少的时候，Master也可以承担Node的工作，就像我们搭建的minikube环境，它就只有一个节点，这个节点既是Master又是Node。</p>
+<h3 id="节点的内部结构"><a href="#节点的内部结构" class="headerlink" title="节点的内部结构"></a>节点的内部结构</h3><p>Kubernetes的节点内部也具有复杂的结构，是由很多模块构成的，这些模块又可以分成组件（Component）和插件（Addon）两类。</p>
+<p>组件实现了Kubernetes的核心功能特性，没有这些组件Kubernetes就无法启动。</p>
+<p>插件是Kubernetes的一些附加功能，属于“锦上添花”，不安装也不影响Kubernetes的正常运行。</p>
+<h4 id="Master里的组件有哪些"><a href="#Master里的组件有哪些" class="headerlink" title="Master里的组件有哪些"></a>Master里的组件有哪些</h4><p>Master里有4个组件，分别是apiserver、etcd、scheduler、controller-manager。</p>
+<p><img src="/load_images/k8s_2_2.png" alt="image"></p>
+<p>apiserver是Master节点，同时也是整个Kubernetes系统的唯一入口，它对外公开了一系列的RESTful API，并且加上了验证、授权等功能，所有其他组件都只能和它直接通信，可以说是Kubernetes里的联络员。</p>
+<p>etcd是一个高可用的分布式key-value数据库，用来持久化存储系统里的各种资源对象和状态，相当于Kubernetes里的配置管理员。注意它只与apiserver有直接联系，也就是说任何组件想要读写etcd里的数据都必须经过apiserver。</p>
+<p>scheduler负责容器的编排工作，检查节点的资源状态，把Pod调度到最合适的节点上运行，相当于部署人员。因为节点状态和Pod信息都存储在etcd里，所以scheduker必须通过apiserver才能获得。</p>
+<p>controller-manager负责维护容器和节点等资源的状态，实现故障检测、服务迁移、应用伸缩等功能，相当于监控运维人员、同样地，它也必须通过apiserver获得存储在etcd里的信息，才能够实现对资源的各种操作。</p>
+<p>这四个组件也都被容器化了，运行在集群的Pod里，可以用kubectl开查看它们的状态：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get pod -n kube-system</span><br><span class="line"></span><br><span class="line">NAME                               READY   STATUS    RESTARTS      AGE</span><br><span class="line">coredns-65c54cc984-7xz52           1/1     Running   0             2d13h</span><br><span class="line">etcd-minikube                      1/1     Running   0             2d13h</span><br><span class="line">kube-apiserver-minikube            1/1     Running   0             2d13h</span><br><span class="line">kube-controller-manager-minikube   1/1     Running   0             2d13h</span><br><span class="line">kube-proxy-zkrqm                   1/1     Running   0             2d13h</span><br><span class="line">kube-scheduler-minikube            1/1     Running   0             2d13h</span><br><span class="line">storage-provisioner                1/1     Running   4 (22h ago)   2d13h</span><br></pre></td></tr></table></figure>
+
+<p>注意-n kube-system参数，表示检查kube-system名字空间里的Pod。</p>
+<h4 id="Node里的组件"><a href="#Node里的组件" class="headerlink" title="Node里的组件"></a>Node里的组件</h4><p>Master里的apiserver、scheduler等组件需要获取节点的各种信息才能够做出管理决策，那这些信息该怎么来呢？</p>
+<p>这就需要Node里的3个组件，kubulet、kube-proxy、container-runtime。</p>
+<p><img src="/source/load_images/k8s_2_3.jpeg" alt="k8s_2_3"></p>
+<p>kubelet是Node的代理，负责管理Node相关的绝大部分操作，Node上只有它能够与apiserver通信，实现状态报告、命令下发、启停容器等功能，相当于Node上的一个“小管家”。</p>
+<p>kube-proxy的作用有点特别，它是Node的网络代理，只负责管理容器的网络通信，简单来说就是为Pod转发TCP&#x2F;UDP数据包，相当于是专职的“小邮差”。</p>
+<p>container-runtime，它是容器和镜像的实际使用者，在kubelet的指挥下创建容器，管理Pod的生命周期，是真正干活的苦力。</p>
+<p>注意：因为Kubernetes的定位是容器编排平台，所以它没有限定container-runtime必须是docker，完全可以替换成任何符合标准的其他容器运行时，例如containerd、CRI-O等。</p>
+<p>这三个组件只有kube-proxy被容器化了，而kubelet因为必须要管理整个节点，容器化会限制它的能力，所以它必须在container-runtime之外运行。</p>
+<p>使用minikube ssh登录节点后，可以使用docker ps查看kube-proxy：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube ssh</span><br><span class="line">docker ps | grep kube-proxy</span><br></pre></td></tr></table></figure>
+
+<p><img src="/source/load_images/k8s_2_4.jpeg" alt="image"></p>
+<p>而kubelet用docker ps是找不到的，需要用操作系统的ps命令：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ps -ef | grep kubelet</span><br></pre></td></tr></table></figure>
+
+
+
+<p>现在再把Node里的组件和Master里的组件放在一起来看，就能够明白Kubernetes的大致流程了：</p>
+<ul>
+<li>每个Node上的kubelet会定期向apiserver上报节点的状态，apiserver再存到etcd里。</li>
+<li>每个Node上的kube-proxy实现了TCP&#x2F;UDP反向代理，让容器对外提供稳定的服务。</li>
+<li>scheduler通过apiserver得到当前节点的状态，调度Pod，然后apiserver下发命令个Node的kubelet，kubelet调用container-runtime启动容器。</li>
+<li>controller-manager也通过apiserver得到实时的节点状态，监控可能得异常情况，再使用相应的手段去调节恢复。</li>
+</ul>
+<p><img src="/load_images/k8s_2_5.png" alt="k8s_2_5"></p>
+<h4 id="插件（Addons）有哪些"><a href="#插件（Addons）有哪些" class="headerlink" title="插件（Addons）有哪些"></a>插件（Addons）有哪些</h4><p>只要服务器节点上运行了apiserver、scheduler、kubelet、kube-proxy、container-runtime等组件，就可以说是一个功能齐全的Kubernetes集群了。</p>
+<p>由于Kubernetes本身设计的非常灵活，所以就有大量的插件用来扩展、增强它对应用和集群的管理能力。</p>
+<p>minikube也支持很多插件，使用命令minikube addons list就可以查看插件列表：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube addons list</span><br></pre></td></tr></table></figure>
+
+<img src="/load_images/k8s_2_6.png" alt="image" style="zoom:50%;" />
+
+<p>有比较重要的两个插件DNS和Dashboard。</p>
+<p>DNS在Kubernetes集群里实现了域名解析服务，能够让我们以域名而不是IP地址的方式来互相通信，是服务发现和负载均衡的基础。由于它对微服务、服务网格等架构至关重要，所以基本上是Kubernetes的必备插件。</p>
+<p>Dashboard仪表盘，为Kubernetes提供了一个图形化的操作界面。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube dashboard</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">可以在默认浏览器打开Dashboard页面，而且还支持中文</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s_2_7.png" alt="k8s_2_7"></p>
+<h3 id="思维导图"><a href="#思维导图" class="headerlink" title="思维导图"></a>思维导图</h3><img src="/load_images/k8s_2_8.png" alt="image"  />
+
+
+
+<h3 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h3><p>为确保控制面的高可用，Kubernetes集群里都会部署多个Master节点，数量一般会是奇数（3&#x2F;5&#x2F;7），这是有etcd的特性决定的。</p>
+<p>controller-manager是多个controller的集合体，每一个controller负责一种控制循环（如node controller、namespace controller），为了简化被合并在一个进程里面执行。</p>
+<p>minikuber的Dashboard只允许在本机运行的浏览器访问，不过也可以给它配置Nginx反向代理。</p>
+]]></content>
+      <categories>
+        <category>Kubernetes</category>
+      </categories>
+      <tags>
+        <tag>Kubernetes</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Kubernetes系列（一）—— 如何在本机搭建小巧完备的kubernetes环境</title>
+    <url>/k8s/minikube/</url>
     <content><![CDATA[<h2 id="Kubernetes"><a href="#Kubernetes" class="headerlink" title="Kubernetes"></a>Kubernetes</h2><span id="more"></span>
 
 <p><a href="https://kubernetes.io/zh/docs/tasks/tools/">tools</a></p>
