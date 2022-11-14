@@ -8,11 +8,315 @@
 ]]></content>
   </entry>
   <entry>
+    <title>Kubernetes系列（七）—— 实战演练</title>
+    <url>/null/null/</url>
+    <content><![CDATA[<h2 id="玩转Kubernetes（1）"><a href="#玩转Kubernetes（1）" class="headerlink" title="玩转Kubernetes（1）"></a>玩转Kubernetes（1）</h2><span id="more"></span>
+
+<p>根据本系列前几篇文章的知识，来一个回顾总结和实战，串联一下知识点。</p>
+<h3 id="Kubernetes技术要点回顾"><a href="#Kubernetes技术要点回顾" class="headerlink" title="Kubernetes技术要点回顾"></a>Kubernetes技术要点回顾</h3><p><strong>容器编排</strong>（Container Orchestration），可以说是以前的运维工作在云原生世界的落地实践，本质上还是在集群里调度管理应用程序，只不过管理的主题由人变成了计算机，管理的目标由原生进程变成了容器和镜像</p>
+<p>Kubernetes源自Borg系统。</p>
+<p>Kubernetes的<strong>Master&#x2F;Node</strong>架构是它具有自动化运维能力的关键。下图简略说明它的运行机制：</p>
+<p><img src="/load_images/k8s/7/k8s_7_1.png" alt="image"></p>
+<p>Kubernetes把集群里的计算资源定位节点（Node），其中又划分为 控制面和数据面两类</p>
+<ul>
+<li>控制面是Master节点，负责管理集群和运维监控应用，里面的核心组件是apiserver、controller-manager、etcd、scheduler</li>
+<li>数据面是Worker节点，受Master节点的管控，里面的核心组件是kubelet、kube-proxy、container-runtime</li>
+</ul>
+<p>此外，Kuberneter还支持插件机制，能够灵活扩展各项功能，常用的插件由DNS和Dashboard</p>
+<p>为了更好的管理集群和应用业务，Kubernetes从现实世界中抽象出了许多概念，称为<strong>API对象</strong>，描述这些对象就需要使用<strong>YAML</strong>语言。</p>
+<p>YAML是JSON的超集，但语法更简洁，表现能力更强，更重要的是它以”<strong>声明式</strong>“来表述对象的状态，不涉及具体的操作细节，这样Kubernetes就能够依靠存储在etcd里集群的状态信息，不断地”调控“对象，直至实际状态与期望状态相同，这个过程就是Kubernetes的自动化运维管理。</p>
+<p>Kubernetes最核心的对象是<strong>Pod</strong>，它捆绑了一组存在密切协作关系的容器，容器之间共享网络和存储，在集群里必须一起调度一起运行。通过Pod这个概念，Kubernetes就简化了对容器的管理工作，其他的所有任务都是通过对Pod这个最小单位的再包装来实现的。</p>
+<p>基于”单一职责“和”对象组合“这两个基本原则，学习了比较简单的API对象：Job&#x2F;CronJob和ConfigMap&#x2F;Secret。</p>
+<ul>
+<li>Job&#x2F;CornJob对应的是离线作业，它们逐层包装了Pod，添加了作业控制和定时规则</li>
+<li>ConfigMap&#x2F;Secret对应的是配置信息，需要以环境变量或存储卷的形式注入进Pod，然后进程才能在运行时使用。</li>
+</ul>
+<p>Kubernetes提供了一个客户端工具，<strong>kubectl</strong>，它直接与Master节点的apiserver通信，把YAML文件发送给RESTful接口，从而触发Kubernetes的对象管理工作流程。</p>
+<p>Kubectl命令很多，查看自带文档可以用api-resources、explain，查看对象状态可以用get、describe、logs，操作对象可以用run、apply、exec、delete等等。</p>
+<p>使用YAML描述API对象有固定的格式，必须写的”头字段“是<strong>apiVersion</strong>、<strong>kind</strong>、<strong>metadata</strong>。其他根据具体对象不同，描述不同。</p>
+<h3 id="实战——搭建WordPress网站"><a href="#实战——搭建WordPress网站" class="headerlink" title="实战——搭建WordPress网站"></a>实战——搭建WordPress网站</h3><h4 id="WordPress网站的基本架构"><a href="#WordPress网站的基本架构" class="headerlink" title="WordPress网站的基本架构"></a>WordPress网站的基本架构</h4><p><img src="/load_images/k8s/7/k8s_7_2.png" alt="image"></p>
+<p>Kubernetes系统和Docker系统的区别又在哪里呢？</p>
+<p>关键就在<strong>对应用的封装</strong>和<strong>网络环境</strong>这两点上。</p>
+<p>现在WordPress、MariaDB这两个应用被封装成了Pod，运行所需的环境变量也都被改写成了ConfigMap，同一用“声明式”来管理，比起Shell脚本更容易阅读和版本化管理。</p>
+<p>另外Kubernetes集群在内部维护了一个自己的专用网络，这个网络和外界隔离，需用特殊的“端口转发”方式来传递数据，还需要在集群之外用Nginx反向代理这个地址，这样才能实现内外沟通，对比Docker的直接端口映射，这里略微麻烦了一些。</p>
+]]></content>
+  </entry>
+  <entry>
+    <title>Kubernetes系列（六）—— ConfigMap/Secret</title>
+    <url>/k8s/config/</url>
+    <content><![CDATA[<h2 id="ConfigMap-x2F-Secret：怎样配置、定制我的应用"><a href="#ConfigMap-x2F-Secret：怎样配置、定制我的应用" class="headerlink" title="ConfigMap&#x2F;Secret：怎样配置、定制我的应用"></a>ConfigMap&#x2F;Secret：怎样配置、定制我的应用</h2><span id="more"></span>
+
+<p>想让业务顺利的运行，有一个问题不容忽视，那就是应用的配置管理。</p>
+<p>容器中可以选择两种配置文件的方式。第一种是编写Dockerfile，用COPY指令把配置文件打包到镜像里；第二种是在运行时使用docker cp 或者docker run -v，把本机的文件拷贝进容器。</p>
+<p>这两种方法都存在缺陷，第一种方法相当于是在镜像里固定了配置文件，不好修改，不灵活；第二种方法显得有点”笨拙“，不适合在集群中自动化运维管理。</p>
+<p>对于这个问题Kubernetes有自己的解决方案，使用YAML语言来定义API对象，再组合起来实现动态配置。</p>
+<h3 id="ConfigMap-x2F-Secret"><a href="#ConfigMap-x2F-Secret" class="headerlink" title="ConfigMap&#x2F;Secret"></a>ConfigMap&#x2F;Secret</h3><p>应用程序有很多类别的配置信息，从数据安全角度来看可以分为两类：</p>
+<ul>
+<li>一类是明文配置，可以任意查询修改，比如服务端口、运行参数、文件路径等等</li>
+<li>一类是机密配置，设计敏感信息需要保密，不能随便查看，比如密码、密钥、证书等等</li>
+</ul>
+<p>这两类配置信息本质上都是字符串，只是由于安全性的原因，在存放和使用方面有些差异，所以Kubernetes也就定义了两个对象，ConfigMap用来保存明文配置，Secret用来保存机密配置。</p>
+<h4 id="什么是ConfigMap"><a href="#什么是ConfigMap" class="headerlink" title="什么是ConfigMap"></a>什么是ConfigMap</h4><p>使用kubectl create创建一个YAML模板：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl create cm info --dry-run=client -o yaml</span><br></pre></td></tr></table></figure>
+
+<p>这是后得到的模板是这样子：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">creationTimestamp:</span> <span class="literal">null</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">info</span></span><br></pre></td></tr></table></figure>
+
+<p>可以发现这个YAML模板和之前文章提到的Pod、Job等，除了apiVersion、kind、metadata，居然就没有其他了，最重要的字段”spec“去哪了？这是因为ConfigMap存储的是配置数据，是静态的字符串，并不是容器，所以它们就不需要用”spec“字段来说明运行时的”规格“。</p>
+<p>既然ConfigMap要存储数据，那么就需要另外一个含义更明确的字段”data“。</p>
+<p>要生成带有”data“字段的YAML样板，需要再kubectl create后面多加一个参数–from-literal，表示从字面值生成一些数据：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl create cm info --from-literal=k=v --dry-run=client -o yaml &gt;&gt; info.yml</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="attr">k:</span> <span class="string">v</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">creationTimestamp:</span> <span class="literal">null</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">info</span></span><br></pre></td></tr></table></figure>
+
+<p>这里可以把YAML修改一下，多添加一些key-value，就得到了一个比较完整的ConfigMap对象：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">info</span></span><br><span class="line"></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="attr">count:</span> <span class="string">&#x27;10&#x27;</span></span><br><span class="line">  <span class="attr">debug:</span> <span class="string">&#x27;on&#x27;</span></span><br><span class="line">  <span class="attr">path:</span> <span class="string">&#x27;/etc/systemd&#x27;</span></span><br><span class="line">  <span class="attr">greeting:</span> <span class="string">|</span></span><br><span class="line">    <span class="string">say</span> <span class="string">hello</span> <span class="string">to</span> <span class="string">kubernetes.</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>创建ConfigMap对象：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f info.yml</span><br></pre></td></tr></table></figure>
+
+
+
+<p>查看ConfigMap状态：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get cm</span><br><span class="line">kubectl describ cm info</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="/load_images/k8s/6/k8s_6_1.png" alt="image"></p>
+<p>可以看到，ConfigMap的key-value信息就已经存入到了etcd数据库，后续就可以被其他API对象。</p>
+<h4 id="什么是Secret"><a href="#什么是Secret" class="headerlink" title="什么是Secret"></a>什么是Secret</h4><p>在Kubernetes里Secret对象细分很多类，比如：</p>
+<ul>
+<li>访问私有镜像仓库的认证信息</li>
+<li>身份识别的凭证信息</li>
+<li>HTTPS通信的证书和私钥</li>
+<li>一般的机密信息（格式由用户自行解释）</li>
+</ul>
+<p>现在以最后一种示例，创建YAML的格式是kubectl create secret generic：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl create secret generic user --from-literal=name=root --dry-run=client -o yaml &gt;&gt; user_sec.yml</span><br></pre></td></tr></table></figure>
+
+<p>得到的YAML样板为：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Secret</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">user</span></span><br><span class="line">  </span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">cm9vdA==</span></span><br></pre></td></tr></table></figure>
+
+<p>可以看到data中的name值为一串”乱码“，而不是命令行输入的root，这就是Secret和ConfigMap的不同之处，不让用户直接看到原始数据，起到一定的保密作用。不过手法非常简单，只是做了Base64的编码，根本算不上真正的加密。所以可以使用Linux小工具”base64“来对数据编码，然后写入YAML文件：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">echo -n &quot;123456&quot; | base64 #要加-n，目的是去掉echo字符串产生的隐藏换行符，否则base64编码出来的字符串就是错误的</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">结果</span></span><br><span class="line">MTIzNDU2</span><br></pre></td></tr></table></figure>
+
+
+
+<p>现在重新编辑Secret的YAML，添加两个新的数据，方式可以是参数–from-literal自动编码，也可以是自己手动编码（base64）：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Secret</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">user</span></span><br><span class="line">  </span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">cm9vdA==</span></span><br><span class="line">  <span class="attr">pwd:</span> <span class="string">MTIzNDU2</span></span><br><span class="line">  <span class="attr">db:</span> <span class="string">bXlzcWw=</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>创建并查看Secret对象：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f user_sec.yml</span><br><span class="line">kubectl get secret</span><br><span class="line">kubectl describe secret user</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="/load_images/k8s/6/k8s_6_2.png" alt="image"></p>
+<p>因为Secret是保密的，所以使用kubectl  describe不能直接看到内容，只能看到数据的大小。</p>
+<h3 id="如何使用"><a href="#如何使用" class="headerlink" title="如何使用"></a>如何使用</h3><p>现在通过编写YAML文件，创建了ConfigMap和Secret对象，该怎么在Kubernetes里应用它们呢？</p>
+<p>因为ConfigMap和Secret只是一些存储到etcd里的字符串，所以如果想要在运行时产生效果，就必须要以某种方式‘注入”到Pod里，让应用去读取。在这方面的处理上Kubernetes和Docker是一样的，也是两种途径：<strong>环境变量</strong>和<strong>加载文件</strong>。</p>
+<h4 id="以环境变量形式使用ConfigMap-x2F-Secret"><a href="#以环境变量形式使用ConfigMap-x2F-Secret" class="headerlink" title="以环境变量形式使用ConfigMap&#x2F;Secret"></a>以环境变量形式使用ConfigMap&#x2F;Secret</h4><p>Pod中描述容器的字段“<strong>containers</strong>”里有一个“<strong>env</strong>”，它定义了Pod里容器能够看到的环境变量。</p>
+<p>可以使用<strong>valueFrom</strong>字段，从ConfigMap或者Secret对象里获取值，这样就实现了把配置信息以环境变量的形式注入到Pod，也就是配置与应用解耦。</p>
+<p>由于valueFrom在YAML里嵌套的比较深，初次使用最好看一下kubectl explain对它的说明：</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">kubectl explain pod.spec.containers.env.valueFrom</span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s/6/k8s_6_3.png" alt="image"></p>
+<p><strong>valueFrom</strong>字段指定了环境变量的来源，可以是<strong>configMapKeyRef</strong>或者<strong>secretKeyRef</strong>，然后进一步指定ConfigMap&#x2F;Secret的<strong>name</strong>和它里面的<strong>key</strong>，这个name是<strong>API对象的名字</strong>，而不是key-value的名字。</p>
+<p>示例：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">env-pod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">env:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">COUNT</span></span><br><span class="line">        <span class="attr">valueFrom:</span></span><br><span class="line">          <span class="attr">configMapKeyRef:</span></span><br><span class="line">            <span class="attr">name:</span> <span class="string">info</span></span><br><span class="line">            <span class="attr">key:</span> <span class="string">count</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">GREETING</span></span><br><span class="line">        <span class="attr">valueFrom:</span></span><br><span class="line">          <span class="attr">configMapKeyRef:</span></span><br><span class="line">            <span class="attr">name:</span> <span class="string">info</span></span><br><span class="line">            <span class="attr">key:</span> <span class="string">greeting</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">USERNAME</span></span><br><span class="line">        <span class="attr">valueFrom:</span></span><br><span class="line">          <span class="attr">secretKeyRef:</span></span><br><span class="line">            <span class="attr">name:</span> <span class="string">user</span></span><br><span class="line">            <span class="attr">key:</span> <span class="string">name</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">PASSWORD</span></span><br><span class="line">        <span class="attr">valueFrom:</span></span><br><span class="line">          <span class="attr">secretKeyRef:</span></span><br><span class="line">            <span class="attr">name:</span> <span class="string">user</span></span><br><span class="line">            <span class="attr">key:</span> <span class="string">pwd</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">busybox</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">busy</span></span><br><span class="line">    <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">    <span class="attr">command:</span> [<span class="string">&quot;/bin/sleep&quot;</span>, <span class="string">&quot;300&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>这个Pod的名字是“env-pod”，镜像是“busybox”，执行命令sleep睡眠300秒，这样可以在这段时间进入Pod观察环境变量。</p>
+<p>重点关注“env”字段，里面定义了四个环境变量，COUNT、GREETING、USERNAME、PASSWORD。</p>
+<p>对于明文配置数据，COUNT、GREETING引用的是ConfigMap对象，所使用的字段是<strong>configMapKeyRef</strong>，里面的name是ConfigMap对象的名字info，key字段对应的是info对象里的count和greeting。</p>
+<p>对于机密配置数据，USERNAME、PASSWORD引用的Secret对象，要使用字段<strong>secretKeyRef</strong>，再用name指定Secret对象的名字user，用key字段对应它里面的name和pwd。</p>
+<p>可以对照图片理解：</p>
+<p><img src="/load_images/k8s/6/k8s_6_4.png" alt="image"></p>
+<p>从图中可以清楚的看出Pod与ConfigMap、Secret的”松耦合“关系，它们不是直接嵌套包含，而是使用”KeyRef“字段间接引用对象，这样，同一配置信息就可以在不同的对象之间共享。</p>
+<p>创建Pod，并验证环境变量是否生效：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f env-pod.yml</span><br><span class="line"></span><br><span class="line">kubectl exec -it env-pod -- sh</span><br><span class="line"></span><br><span class="line">echo $COUNT</span><br><span class="line">echo $GREETING</span><br><span class="line">echo $USERNAME</span><br><span class="line">echo $PASSWORD</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="/load_images/k8s/6/k8s_6_5.png" alt="image"></p>
+<p>从图中可以看到，Pod对象成功组合了ConfigMap和Secret对象。</p>
+<h4 id="如何以Volume的方式使用ConfigMap-x2F-Secret"><a href="#如何以Volume的方式使用ConfigMap-x2F-Secret" class="headerlink" title="如何以Volume的方式使用ConfigMap&#x2F;Secret"></a>如何以Volume的方式使用ConfigMap&#x2F;Secret</h4><p>Kubernetes为Pod定义了一个”Volume“的概念，可以翻译成”存储卷“。如果把Pod理解成一个虚拟机，那么Volume就相当于是虚拟机里的磁盘。</p>
+<p>可以为Pod”挂载（Mount）“多个Volume，里面存放供Pod访问的数据，这种方式有点类似docker run -v，虽然用法复杂了一些，但功能也响应强大一些。</p>
+<p>在Pod里挂载Volume很容易，只需要在<strong>spec</strong>字段增加一个<strong>Volumes</strong>字段，然后再定义卷的名字和引用ConfigMap&#x2F;Secret就可以了。需要注意的是Volume属于Pod，不属于容器，所以它和字段”containers“是同级的，都属于”spec“。</p>
+<p>示例：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">vol-pod</span></span><br><span class="line"></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">volumes:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">cm-vol</span></span><br><span class="line">    <span class="attr">configMap:</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">info</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">sec-vol</span></span><br><span class="line">    <span class="attr">secret:</span></span><br><span class="line">      <span class="attr">secretName:</span> <span class="string">user</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">volumeMounts:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">mountPath:</span> <span class="string">/tmp/cm-items</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">cm-vol</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">mountPath:</span> <span class="string">/tmp/sec-times</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">sec-vol</span></span><br><span class="line"></span><br><span class="line">    <span class="attr">image:</span> <span class="string">busybox</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">busy</span></span><br><span class="line">    <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">    <span class="attr">command:</span> [<span class="string">&quot;/bin/sleep&quot;</span>, <span class="string">&quot;300&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>从示例中可以看到：</p>
+<ul>
+<li>volumes字段中引入了ConfigMap和Secret，名字分别为cm-vol和sec-vol</li>
+<li>containers字段中使用volumeMoounts挂载了上面引入的两个volume，使用mountPath字段挂载到容器的某个路径下，并使用name字段指定volume的名字</li>
+<li>把volumes和volumeMounts字段写好后，配置信息就可以加载成文件了。</li>
+</ul>
+<p><img src="/load_images/k8s/6/k8s_6_6.png" alt="image"></p>
+<p>从图片中可以看到，挂载Volume的方式和环境变量又不太相同。环境变量是直接引用了ConfigMap&#x2F;Secret，而Volume又多加了一个环节，需要先用Volume引用ConfigMap&#x2F;Secret，然后在容器里挂载Volume。</p>
+<p>这种方式的好处是：以Volume的概念同一抽象了所有的存储，不仅现在支持ConfigMap&#x2F;Secret，以后还能够支持临时卷、持久卷、动态卷、快照卷等许多形式的存储，扩展性非常好。</p>
+<p>创建Pod，并进入Pod查看加载的配置信息：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f vol-pod.yml</span><br><span class="line">kubectl get pod</span><br><span class="line">kubectk exec -it vol-pod -- sh</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="/load_images/k8s/6/k8s_6_7.png" alt="image"></p>
+<p>可以看到，ConfigMap和Secret都变成了目录形式，而它们里面的key-value变成了一个个文件，而文件名就是Key。</p>
+<p>因为这种形式上的差异，以Volume的方式来使用ConfigMap&#x2F;Secret，就和环境变量不太一样。环境变量用法简单，适合存放简短的字符串，而Volume更适合存放大数据量的配置文件，在Pod里面加载成文件后让应用直接读取使用。</p>
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><ol>
+<li>ConfigMap记录了一些key-value格式的字符串数据，描述字段是data，不是sepc</li>
+<li>Secret，也是使用data保存字符串数据，但它要求数据必须是base64编码，起到一定的保密效果</li>
+<li>Pod的env.valueFrom字段可以引用ConfigMap和Secret，把它们变成应用可以访问的环境变量</li>
+<li>Pod的spec.volumes字段中可以引用ConfigMap和Secret，把它们变成存储卷，然后在spec.containers.volumeMounts字段中加载成文件形式。</li>
+<li>ConfigMap和Secret对存储数据的大小是有限制的，限制为1MB，<a href="https://kubernetes.io/zh-cn/docs/concepts/configuration/configmap/#motivation">官方说明</a></li>
+<li>如果已经存在了一些配置文件，可以使用参数–from-file从文件自动创建出ConfigMap或者Secret</li>
+<li>Secret对象默认只会以Base64编码的形式存储在etcd里，而Base64不是加密算法，所以它通常并不是”secret“，不过可以为Kubernetes启用加密功能，实现真正的安全</li>
+<li>Linux里对环境变量的命名有限制，不能使用”-“”.“等特殊字符，所以在创建ConfigMap&#x2F;Secret的时候要留意一下，否则会无法以环境变量的形式注入Pod</li>
+<li>volume这个词也许是来源于早期计算机存储使用的磁带设备，都是一卷一卷的，而mount操作，自然就是把磁带给”挂载“上磁带机了</li>
+<li>可以在volumes.configMap.items字段里用key、path为ConfigMap里的每个key-value精确的指定加载的路径名，也就是给文件改名</li>
+<li>修改了ConfigMap&#x2F;Secret的YAML，并使用kubectl apply命令更新对象，Pod中以环境变量引入的ConfigMap&#x2F;Secret，信息不会发生变动（环境变量是在Pod启动时注入的，所以不会修改，除非Pod重启）；以Volume形式挂载进去的，信息会发生变动。</li>
+</ol>
+]]></content>
+      <categories>
+        <category>Kubernetes</category>
+      </categories>
+      <tags>
+        <tag>Kubernetes</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Kubernetes系列（五）—— Job/CronJob</title>
+    <url>/k8s/job_cronjob/</url>
+    <content><![CDATA[<h2 id="Job-x2F-CronJob：为什么不直接用Pod来处理业务？"><a href="#Job-x2F-CronJob：为什么不直接用Pod来处理业务？" class="headerlink" title="Job&#x2F;CronJob：为什么不直接用Pod来处理业务？"></a>Job&#x2F;CronJob：为什么不直接用Pod来处理业务？</h2><span id="more"></span>
+
+<h3 id="为什么不直接使用Pod"><a href="#为什么不直接使用Pod" class="headerlink" title="为什么不直接使用Pod"></a>为什么不直接使用Pod</h3><p>Kubernetes使用的是RESTful API，把集群中的各种业务都抽象为HTTP资源对象，那么在这个层次之上，我们就可以使用面向对象的方式来考虑问题。</p>
+<p>为什么用面向对象思想来描述Kubernetes呢，因为Kubernetes使用YAML来描述资源，把业务简化成了一个个对象，内部有属性，外部有联系，也需要互相协作。</p>
+<p>面向对象的设计有许多基本原则，其中有两条比较恰当的描述了Kubernetes对象设计思路，一个是“<strong>单一职责</strong>”，另一个是“<strong>组合优于继承</strong>”。</p>
+<p>“单一职责”的意思是对象应该只专注于做好一件事情，不要贪大求全，保持足够小的粒度才能方便复用和管理。</p>
+<p>“组合优于继承”的意思是应该尽量让对象在运行时产生联系，保持松耦合，而不要用硬编码的方式固定对象的关系。</p>
+<p>应用这两条原则，再来看Kubernetes的资源对象就会很清晰了。因为Pod已经是一个相对完善的对象，专门负责管理容器，那么我们就不应该再“画蛇添足”地盲目为它扩充功能，而是要保持它的独立性，容器之外的功能就需要定义其他的对象，把Pod作为它一个成员“组合”进去。</p>
+<p>这样每种Kubernetes对象就可以只关注自己的业务领域，只做自己最擅长的事情，其他的工作交给其他对象来处理，既不“缺位”也不“越位”，既有分工又有协作，从而以最小成本实现最大收益。</p>
+<h3 id="为什么要走Job-x2F-CronJob"><a href="#为什么要走Job-x2F-CronJob" class="headerlink" title="为什么要走Job&#x2F;CronJob"></a>为什么要走Job&#x2F;CronJob</h3><p>Job和CronJob，它们组合了Job，实现了对离线业务的处理。</p>
+<p>之前文章讲Pod的时候，运行过两个Pod：Nginx和busybox，它们分别代表了Kubernetes里的两大业务。一类是像Nginx这样长时间运行的‘<strong>在线业务</strong>“，另一类是像busybox这样短时间运行的”<strong>离线业务</strong>“。</p>
+<p>”在线业务“类型的应用有很多，比如Nginx、MySQL、Redis等等，一旦运行起来基本上不会停，也就是永远在线。</p>
+<p>”离线业务“类型的应用也不少见，它们一般不直接服务于外部用户，只对内部用户有意义，比如日志分析、数据建模、视频转码等等，虽然计算量很大，但是只会运行一段时间。”离线业务“的特点是<strong>必定会退出</strong>，不会无限地运行下去，所以它的调度策略也就与”在线业务“存在很大不同，需要考虑运行超时、状态检查、失败重试、获取计算结果等管理事项。</p>
+<p>而这些业务特性与容器管理没有必然的联系，如果由Pod来实现就会承担不必要的义务，违反了”单一原则“，所以应该把这部分功能分离到另外一个对象上实现，让这个对象去控制Pod的运行，完成附加的工作。</p>
+<p>”离线业务“也可以分为两种。一种是”<strong>临时任务</strong>“，跑完就完事了，下次有需求了说一声再重新安排；另一种是”<strong>定时任务</strong>“，可以按时按点周期运行，不需要过多干预。</p>
+<p>对应到Kubernetes里，”临时任务“就是API对象Job，”定时任务“就是API对象CronJob，使用这两个对象就能够在Kubernetes里调度管理任意的离线业务了。</p>
+<h3 id="如何使用YAML描述Job"><a href="#如何使用YAML描述Job" class="headerlink" title="如何使用YAML描述Job"></a>如何使用YAML描述Job</h3><p>Job的YAML”文件头“还是那几个必备字段：</p>
+<ul>
+<li>apiVersion，值为batch&#x2F;v1</li>
+<li>kind，值为Job</li>
+<li>metadata里仍然要有name标记名字，也可以用labels添加任意标签</li>
+</ul>
+<p>也可以使用kubectl explain job来看它的字段说明。</p>
+<p>生成Job的YAML样板文件，不能使用kubectl run，因为kubectl run 只能创建Pod，要创建Pod以外的其他API对象，需要使用命令kubectl create，再加上对象的类型名。</p>
+<p>比如用busybox创建一个”echo-job“，命令如下：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl create job echo-job --image=busybox --dry-run=client -o yaml</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">以上命令会在终端显示yaml格式内容，如果要生成yaml文件，需要 &gt;&gt; filename.yml重定向到文件</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s/5/k8s_5_1.png" alt="image"></p>
+<p>稍微修改一下，就有了一个Job对象：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">batch/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Job</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">echo-job</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">restartPolicy:</span> <span class="string">OnFailure</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">busybox</span></span><br><span class="line">        <span class="attr">name:</span> <span class="string">echo-job</span></span><br><span class="line">        <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">        <span class="attr">command:</span> [<span class="string">&quot;/bin/echo&quot;</span>]</span><br><span class="line">        <span class="attr">args:</span> [<span class="string">&quot;hello&quot;</span>, <span class="string">&quot;world&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>Job的描述和Pod很像，主要区别在”spec“字段里，多了一个template字段，然后又是一个”spec“。</p>
+<p>这里就是刚才所说的面向对象思想，其实就是在Job对象里应用了组合模式，template字段定义了一个”<strong>应用模板</strong>“，里面嵌入了一个Pod，这样Job就可以从这个模板来创建出Pod。</p>
+<p>而这个Pod因为受Job管理控制，不直接和apiserver打交道，也就没必要重复apiVersion等”头字段“，只需要定义好关键的spec，描述清除容器相关的信息就可以了，可以说是一个”无头“的Pod对象。</p>
+<p>可以从下图理解一下：</p>
+<p><img src="/load_images/k8s/5/k8s_5_2.png" alt="image"></p>
+<p>总结来说，这里的Pod工作非常简单，在containers里写好名字和镜像，command执行&#x2F;bin&#x2F;echo，输出”hello world“。</p>
+<p>不过，因为Job业务的特殊性，还需要在Pod的spec里多加一个字段restartPolicy，确定Pod运行失败时的策略，OnFailure是失败原地重启容器，而Never则是不重启容器，让Job去重新调度生成一个新的Pod。</p>
+<h3 id="如何在Kubernetes里操作Job"><a href="#如何在Kubernetes里操作Job" class="headerlink" title="如何在Kubernetes里操作Job"></a>如何在Kubernetes里操作Job</h3><p>现在来创建一个Job对象，运行这个简单的离线作业：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="string">kubectl</span> <span class="string">apply</span> <span class="string">-f</span> <span class="string">echo_job.yml</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>创建之后Kubernetes就会从YAML的模板定义中提取Pod，在Job的控制下运行Pod，可以用kubectl get job、kubectl get pod来查看Job和Pod的状态：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get job</span><br><span class="line">kubectl get pod</span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s/5/k8s_5_3.png" alt="image"></p>
+<p>可以看到，因为Pod被Job管理，它就不会反复重启报错了，而是会显示为Completed表示任务完成，而Job里COMPLETIONS字段也会列出运行成功的作业数量，这里只有一个作业，所以就是1&#x2F;1。</p>
+<p>还可以看到，Pod被自动关联了一个名字，用的是Job的名字（echo-job）再加上一个随机字符串，这当然也是Job管理的功劳，免去了我们手工定义的麻烦，这样我们就可以使用命令kubectk logs来获取Pod的运行结果：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl logs echo-job-4fbpk</span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s/5/k8s_5_4.png" alt="image"></p>
+<p>到这里，可能会觉得，经过了Job、Pod对容器的两次封装，虽然从概念上很清晰，但好像并没有带来什么实际的好处，和直接跑容器也差不了多少。其实Kubernetes的这套YAML描述对象的框架提供了非常多的灵活性，可以在Job级别、Pod级别添加任意的字段来定制业务，这种优势是简单的容器技术无法相比的。</p>
+<p>这里列出几个控制离线作业的重要字段，其他更详细的信息可以参考Job文档：</p>
+<ul>
+<li><strong>activeDeadlineSeconds</strong>，设置Pod运行的超时时间</li>
+<li><strong>backoffLimit</strong>，设置Pod失败重试次数</li>
+<li><strong>completions</strong>，Job完成需要运行多少个Pod，默认是1个</li>
+<li><strong>parallelism</strong>，与completions相关，表示允许并发运行的Pod数量，避免过多占用资源</li>
+</ul>
+<p>这四个字段并不在template字段下，而是在spec字段下，所有它们是属于Job级别的，用来控制模板里的Pod对象。</p>
+<p>下面在创建一个Job对象，名字叫sleep-job，它随机睡眠一段时间再退出，模拟运行时间较长的作业（比如MapReduce）。Job的参数设置成15秒超时，最多重试2次，总共需要运行完4个Pod，但同一时间最多并发2个Pod：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">batch/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Job</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">sleep-job</span></span><br><span class="line"></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">activeDeadlineSeconds:</span> <span class="number">15</span></span><br><span class="line">  <span class="attr">backoffLimit:</span> <span class="number">2</span></span><br><span class="line">  <span class="attr">completions:</span> <span class="number">4</span></span><br><span class="line">  <span class="attr">parallelism:</span> <span class="number">2</span></span><br><span class="line"></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">restartPolicy:</span> <span class="string">OnFailure</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">busybox</span></span><br><span class="line">        <span class="attr">name:</span> <span class="string">echo-job</span></span><br><span class="line">        <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">        <span class="attr">command:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="string">sh</span></span><br><span class="line">          <span class="bullet">-</span> <span class="string">-c</span></span><br><span class="line">          <span class="bullet">-</span> <span class="string">sleep</span> <span class="string">$(($RANDOM</span> <span class="string">%</span> <span class="number">10</span> <span class="string">+1))</span> <span class="string">&amp;&amp;</span> <span class="string">echo</span> <span class="string">done</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>创建job，并实时观察Pod的状态：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f sleep_job.yml #创建Job</span><br><span class="line">kubectl get pod -w  #实时观察Pod</span><br></pre></td></tr></table></figure>
+
+
+
+<p><img src="/load_images/k8s/5/k8s_5_5.png" alt="image"></p>
+<p>显然，声明式的Job对象让离线业务的描述变得非常直观，简单的几个字段就可以很好地控制作业的并行度和完成数量，不需要我们去人工监控干预，Kubernetes把这些都自动化实现了。</p>
+<h3 id="如何用YAML描述CronJob"><a href="#如何用YAML描述CronJob" class="headerlink" title="如何用YAML描述CronJob"></a>如何用YAML描述CronJob</h3><h4 id="创建CronJob模板"><a href="#创建CronJob模板" class="headerlink" title="创建CronJob模板"></a>创建CronJob模板</h4><p>CronJob简写cj。kubectl api-resources中可以看到。</p>
+<p>CronJob需要定时运行，所以在命令行里还需要指定参数–schedule。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl create cj echo-cj --image=busybox --schedule=&quot;&quot; --dry-run=client -o yaml &gt;&gt; echo_cj.yml</span><br></pre></td></tr></table></figure>
+
+
+
+<p>然后编辑这个模板：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">batch/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">CronJob</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">echo-cj</span></span><br><span class="line"></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">schedule:</span> <span class="string">&#x27;*/1 * * * *&#x27;</span></span><br><span class="line">  <span class="attr">jobTemplate:</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">template:</span></span><br><span class="line">        <span class="attr">spec:</span></span><br><span class="line">          <span class="attr">restartPolicy:</span> <span class="string">OnFailure</span></span><br><span class="line">          <span class="attr">containers:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">busybox</span></span><br><span class="line">            <span class="attr">name:</span> <span class="string">echo-cj</span></span><br><span class="line">            <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">            <span class="attr">command:</span> [<span class="string">&quot;/bin/echo&quot;</span>]</span><br><span class="line">            <span class="attr">args:</span> [<span class="string">&quot;hello&quot;</span>, <span class="string">&quot;world&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>还是重点关注spec字段，会发现居然连续有三个spec嵌套层次：</p>
+<ul>
+<li>第一个spec是CronJob自己的对象规格</li>
+<li>第二个spec从属于”JobTemplate“，它定义了一个Job对象</li>
+<li>第三个spec从属于”Template“，它定义了Job里运行的Pod</li>
+</ul>
+<p>所以CronJob其实是又组合了Job而生成的新对象：</p>
+<p><img src="/load_images/k8s/5/k8s_5_6.png" alt="image"></p>
+<p>除了定义Job对象的”jobTemplate“字段之外，CronJob还有一个新字段就是”schedule“，用来定义任务周期运行的规则。使用的是标准的Cron语法，指定分钟、小时、天、月、周，和Linux的crontab一样。这里是每分钟运行一次。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f echo_cj.yml #创建CronJob</span><br><span class="line">kubectl get cj #查看cj状态</span><br><span class="line">kubectl get pod #查看对应pod状态</span><br></pre></td></tr></table></figure>
+
+<p><img src="/load_images/k8s/5/k8s_5_7.png" alt="image"></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li><p>Pod是Kubernetes的最小调度单元，为了保持它的独立性，不应该向它添加多余的功能</p>
+</li>
+<li><p>Kubernetes为离线业务提供了Job和CronJob两种API对象，分别处理”临时任务“和”定时任务“</p>
+</li>
+<li><p>Job的关键字段是spec.template，里面定义了用来运行业务的Pod模板，其他的重要字段有completions、parallelism等</p>
+</li>
+<li><p>CronJob的关键字段是sepc.jobTemplate和spec.schedule，分别定义了Job模板和定时运行的规则</p>
+</li>
+<li><p>Job&#x2F;CronJob的apiVersion字段是batch&#x2F;v1，表示它们不属于核心对象组（core group），而是批处理对象组（batch group）</p>
+</li>
+<li><p>单词Cron来源于希腊语，即Chronos，意思是”时间“</p>
+</li>
+<li><p>Job在运行结束后不会立即删除，这是为了方便获取计算结果，如果积累过多的已完成Job也会消耗系统资源，可以使用字段”ttlSecondsAfterFinished“设置一个保留的时限。</p>
+</li>
+<li><p>出于节约资源考虑，CronJob不会无限保留已经运行的Job，它默认只保留3个最近的执行结果，但可以用字段”successfulJobsHistoryLimit“改变。</p>
+</li>
+<li><p>网站<a href="https://crontab.guru/">https://crontab.guru/</a> 可以很直观的表达Cron时间设置表达式的含义</p>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Kubernetes</category>
+      </categories>
+      <tags>
+        <tag>Kubernetes</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Kubernetes系列（四）—— Pod</title>
     <url>/k8s/pod/</url>
     <content><![CDATA[<h2 id="Pod：Kubernetes最核心的概念"><a href="#Pod：Kubernetes最核心的概念" class="headerlink" title="Pod：Kubernetes最核心的概念"></a>Pod：Kubernetes最核心的概念</h2><span id="more"></span>
 
-<h3 id="为什么要有Pod"><a href="#为什么要有Pod" class="headerlink" title="为什么要有Pod"></a>为什么要有Pod</h3><p><img src="/load_images/k8s_4_1.png" alt="k8s_4_1"></p>
+<h3 id="为什么要有Pod"><a href="#为什么要有Pod" class="headerlink" title="为什么要有Pod"></a>为什么要有Pod</h3><p><img src="/load_images/k8s/4/k8s_4_1.png" alt="k8s_4_1"></p>
 <p>Pod原意是“豌豆荚”，后来又延伸出“舱室”“太空舱”等含义，图片中，形象的来说Pod就是包含了多组件、成员的一种结构。</p>
 <p>容器技术，让进程在一个“沙盒”环境里运行，具有良好的隔离性，对应用时一个非常好的封装。</p>
 <p>不过，当容器技术进入到现实的生产环境中时，这种隔离性就带来了一些麻烦。因为很少有应用时完全独立运行的，经常需要几个进程互相协作才能完成任务。</p>
@@ -22,7 +326,7 @@
 <p>所以，Pod的概念也就呼之欲出了，容器正式“豆荚”里那些小小的“豌豆”，可以在Pod的YAML里看到，“spec.containers”字段其实是一个数组，里面允许定义多个容器。</p>
 <h3 id="为什么Pod是Kubernetes的核心对象"><a href="#为什么Pod是Kubernetes的核心对象" class="headerlink" title="为什么Pod是Kubernetes的核心对象"></a>为什么Pod是Kubernetes的核心对象</h3><p>因为Pod是对容器的“打包”，里面的容器是一个整体，总是能够一起调度、一起运行，绝对不会出现分离的情况，而且Pod属于Kubernetes，可以在不触碰下层容器的情况下任意定制修改。所以有了Pod这个抽象概念，Kubernetes在集群级别上管理应用就会“得心应手”了。</p>
 <p>Kubernetes让Pod去编排处理容器，然后把Pod作为应用调度部署的<strong>最小单位</strong>，Pod也因此成为了Kubernetes世界里的“原子”（当然这个原子内部是有结构的，不是铁板一块），基于Pod就可以构建出更多更复杂的业务形态了。</p>
-<p><img src="/load_images/k8s_4_2.png" alt="k8s_4_2"></p>
+<p><img src="/load_images/k8s/4/k8s_4_2.png" alt="k8s_4_2"></p>
 <p>从图中可以看出，所有的Kubernetes资源都直接或者间接的依附在Pod之上，所有的Kubernetes功能都必须通过Pod来实现，所以Pod理所当然地成为了Kubernetes的核心对象。</p>
 <h3 id="如何用YAML描述Pod"><a href="#如何用YAML描述Pod" class="headerlink" title="如何用YAML描述Pod"></a>如何用YAML描述Pod</h3><p>我们始终可以使用<strong>kubectl explain</strong>来查看任意字段的详细说明。</p>
 <p>Pod是API对象，所以它必然也有apiVersion、kind、metadata、spec这四个基本组成部分。</p>
@@ -62,15 +366,15 @@
 <p>和Docker不一样，Kubernetes的Pod不会在前台运行，只能在后台（相当于默认使用了参数-d），所以输出信息不能直接看到。我们可以用命令kubectl logs，它会把Pod的标准输出流信息展示给我们看，在这里就会显示出预设的两个环境变量值：</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl logs busy-pod</span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_4_3.png" alt="image"></p>
+<p><img src="/load_images/k8s/4/k8s_4_3.png" alt="image"></p>
 <p>查看Pod列表和运行状态</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get pod</span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_4_4.png" alt="image"></p>
+<p><img src="/load_images/k8s/4/k8s_4_4.png" alt="image"></p>
 <p>从图片中发现这个Pod运行有点不正常，状态是“CrashLoopBackOff”，那么可以使用命令kubectl describe来检查它的详细状态，在调试排错时很有用：</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl describe pod busy-pod</span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_4_5.png" alt="image"></p>
+<p><img src="/load_images/k8s/4/k8s_4_5.png" alt="image"></p>
 <p>通常只需要关注末尾的“Events”部分，它显示的是Pod运行过程中的一些关键节点事件。</p>
 <p>对于这个busy-pod，因为它只执行了一条echo命令就退出了，而Kubernetes默认会重启Pod，所以就会进入一个反复停止 - 启动的循环错误状态。</p>
 <p>Kubernetes里运行的应用大部分都是不会主动退出的服务，我们可以把这个busy-pod删掉，创建一个ngx-pod.yml，启动一个Nginx服务，这才是大多数Pod的工作方式。</p>
@@ -78,7 +382,7 @@
 
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl apply -f ngx-pod.yml</span><br><span class="line"></span><br><span class="line">kubectl get pod #可以看到ngix-pod处于Running状态</span><br><span class="line"></span><br><span class="line">kubectl log ngx-pod #可以查看Nginx的运行日志</span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_4_6.png" alt="image"></p>
+<p><img src="/load_images/k8s/4/k8s_4_6.png" alt="image"></p>
 <p>kubectl cp 可以把本地文件拷贝进Pod</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">echo &quot;Hello Pod&quot; &gt;&gt; tmp.txt</span><br><span class="line">kubectl cp tmp.txt ngx-pod:/tmp</span><br></pre></td></tr></table></figure>
 
@@ -87,7 +391,7 @@
 <p>kubectl exec进入Pod内部执行Shell命令，需要再Pod后面加上–，把kubectl的命令和Shell命令分隔开</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl exec -it ngx-pod -- sh</span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_4_7.png" alt="image"></p>
+<p><img src="/load_images/k8s/4/k8s_4_7.png" alt="image"></p>
 <p>虽然Pod是Kubernetes的核心概念，非常重要，但事实上在Kubernetes里通常并不会直接创建Pod，因为它支队容器做了简单的包装，比较脆弱，离复杂的业务需求还有些距离，需要Job、CronJob、Deployment等其他对象增添更多的功能才能投入生产使用。</p>
 <p>Pod内部有一个名为infra的容器，它实际上代表了Pod，维护着Pod内多容器共享的主机名、网络和存储。infra容器的镜像叫“pause”，非常小，只有不到500KB。</p>
 <p>metadata里的标签不能任意写，必须要符合域名规范（FQDN）。</p>
@@ -118,12 +422,12 @@
 <p>都有哪些API对象呢？</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">查看当前Kubernetes版本支持的所有对象</span></span><br><span class="line">kubectl api-resources </span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_3_1.png" alt="image"></p>
+<p><img src="/load_images/k8s/3/k8s_3_1.png" alt="image"></p>
 <p>NAME一栏，就是对象的名字。SHORTNAMES是简写，在使用kubectl命令的时候可以使用</p>
 <p>在使用kubectl命令的时候，可以加上一个参数–v&#x3D;9，它会显示出详细的命令执行过程，清楚地看到发出的HTTP请求</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl get pod --v=9</span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_3_2.png" alt="image"></p>
+<p><img src="/load_images/k8s/3/k8s_3_2.png" alt="image"></p>
 <p>从图中可以看到，kubectl客户端等价于调用了curl，向8443端口发送了HTTP GET请求，URL是&#x2F;api&#x2F;v1&#x2F;namespaces&#x2F;default&#x2F;pods。</p>
 <p>这些API对象，全面地描述了集群的节点、应用、配置、服务、账号等等信息，apiserver会把它们都存储在数据库etcd里，然后kubelet、scheduler、controller-manager等组件通过apiserver来操作它们，就在API对象这个抽象层次实现了对整个集群的管理。</p>
 <h3 id="如何描述API对象"><a href="#如何描述API对象" class="headerlink" title="如何描述API对象"></a>如何描述API对象</h3><p>以YAML语言，使用“声明式”在Kubernetes里描述并创建API对象。</p>
@@ -154,13 +458,13 @@
 
 <p>Kubernetes收到这份“声明式”的数据，再根据HTTP请求里的POST&#x2F;DELETE等方法，就会自动操作这个资源对象，至于对象在哪个节点上、怎么创建、怎么删除完全不用我们操心。</p>
 <h3 id="如何编写YAML"><a href="#如何编写YAML" class="headerlink" title="如何编写YAML"></a>如何编写YAML</h3><p><a href="https://kubernetes.io/docs/reference/kubernetes-api/">官方文档</a> API对象的所有字段都可以在里面找到。</p>
-<p>第一个技巧，kubectl api-resources命令，会显示出资源对象响应的API版本和类型。</p>
-<p>第二个技巧，kubectl explain，相当于Kubernetes自带的API文档，会给出对象字段的详细说明，这样就不必去网上查找了。</p>
+<h4 id="第一个技巧"><a href="#第一个技巧" class="headerlink" title="第一个技巧"></a>第一个技巧</h4><p>kubectl api-resources命令，会显示出资源对象响应的API版本和类型。</p>
+<h4 id="第二个技巧"><a href="#第二个技巧" class="headerlink" title="第二个技巧"></a>第二个技巧</h4><p>kubectl explain，相当于Kubernetes自带的API文档，会给出对象字段的详细说明，这样就不必去网上查找了。</p>
 <p>比如想看Pod里的字段该怎么写：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">kubectl explain pod</span><br><span class="line">kubectl explain pod.metadata</span><br><span class="line">kubectl explain pod.spec</span><br><span class="line">kubectl explain pod.spec.containers</span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_3_3.png" alt="image"></p>
-<p>第三个技巧，kubectl两个特殊的参数 –dry-run&#x3D;client和-o yaml，前者是空运行，后者是生成YAML格式，结合起来使用就会让kubectl不会有实际的创建动作，而只生成YAML文件。</p>
+<p><img src="/load_images/k8s/3/k8s_3_3.png" alt="image"></p>
+<h4 id="第三个技巧"><a href="#第三个技巧" class="headerlink" title="第三个技巧"></a>第三个技巧</h4><p>kubectl两个特殊的参数 –dry-run&#x3D;client和-o yaml，前者是空运行，后者是生成YAML格式，结合起来使用就会让kubectl不会有实际的创建动作，而只生成YAML文件。</p>
 <p>例如，生成一个Pod的YAML样板示例：</p>
 <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">kubectl run ngx --image=nginx:alpine --dry-run=client -o yaml</span><br><span class="line">#注：以上命令只会在终端输出yaml内容，如果需要生成文件，需要重定向到文件中 &gt;&gt; filename.yml</span><br></pre></td></tr></table></figure>
 
@@ -173,11 +477,11 @@
 ]]></content>
   </entry>
   <entry>
-    <title>Kubernetes系列（二）—— 工作机制</title>
+    <title>Kubernetes(二) —— 工作机制</title>
     <url>/k8s/core/</url>
     <content><![CDATA[<h2 id="Kubernetes工作机制"><a href="#Kubernetes工作机制" class="headerlink" title="Kubernetes工作机制"></a>Kubernetes工作机制</h2><span id="more"></span>
 
-<h3 id="Kubernetes基本架构图"><a href="#Kubernetes基本架构图" class="headerlink" title="Kubernetes基本架构图"></a>Kubernetes基本架构图</h3><p><img src="/load_images/k8s_2_1.png" alt="image"></p>
+<h3 id="Kubernetes基本架构图"><a href="#Kubernetes基本架构图" class="headerlink" title="Kubernetes基本架构图"></a>Kubernetes基本架构图</h3><p><img src="/load_images/k8s/2/k8s_2_1.png" alt="image"></p>
 <p>Kubernetes采用了现在流行的”控制面&#x2F;数据面“（Control Plane &#x2F; Data Plane）架构，集群里的计算机被称为”节点“（Node），可以是实机也可以是虚机，少量的节点用作控制面来执行集群的管理维护工作，其他的大部分节点都被划归数据面，用来跑业务应用。</p>
 <p>控制面节点在Kubernetes中叫做Master Node，一般简称为Master，它是整个集群里最重要的部分，可以说是Kubernetes的大脑和心脏。</p>
 <p>数据面的节点叫做Worker Node，一般旧简称为Worker或者Node，相当于Kubernetes的手和脚，在Master的指挥下干活。</p>
@@ -191,7 +495,7 @@
 <p>组件实现了Kubernetes的核心功能特性，没有这些组件Kubernetes就无法启动。</p>
 <p>插件是Kubernetes的一些附加功能，属于“锦上添花”，不安装也不影响Kubernetes的正常运行。</p>
 <h4 id="Master里的组件有哪些"><a href="#Master里的组件有哪些" class="headerlink" title="Master里的组件有哪些"></a>Master里的组件有哪些</h4><p>Master里有4个组件，分别是apiserver、etcd、scheduler、controller-manager。</p>
-<p><img src="/load_images/k8s_2_2.png" alt="image"></p>
+<p><img src="/load_images/k8s/2/k8s_2_2.png" alt="image"></p>
 <p>apiserver是Master节点，同时也是整个Kubernetes系统的唯一入口，它对外公开了一系列的RESTful API，并且加上了验证、授权等功能，所有其他组件都只能和它直接通信，可以说是Kubernetes里的联络员。</p>
 <p>etcd是一个高可用的分布式key-value数据库，用来持久化存储系统里的各种资源对象和状态，相当于Kubernetes里的配置管理员。注意它只与apiserver有直接联系，也就是说任何组件想要读写etcd里的数据都必须经过apiserver。</p>
 <p>scheduler负责容器的编排工作，检查节点的资源状态，把Pod调度到最合适的节点上运行，相当于部署人员。因为节点状态和Pod信息都存储在etcd里，所以scheduker必须通过apiserver才能获得。</p>
@@ -202,7 +506,7 @@
 <p>注意-n kube-system参数，表示检查kube-system名字空间里的Pod。</p>
 <h4 id="Node里的组件"><a href="#Node里的组件" class="headerlink" title="Node里的组件"></a>Node里的组件</h4><p>Master里的apiserver、scheduler等组件需要获取节点的各种信息才能够做出管理决策，那这些信息该怎么来呢？</p>
 <p>这就需要Node里的3个组件，kubulet、kube-proxy、container-runtime。</p>
-<p><img src="/source/load_images/k8s_2_3.jpeg" alt="k8s_2_3"></p>
+<p><img src="/source/load_images/k8s/2/k8s_2_3.jpeg" alt="k8s_2_3"></p>
 <p>kubelet是Node的代理，负责管理Node相关的绝大部分操作，Node上只有它能够与apiserver通信，实现状态报告、命令下发、启停容器等功能，相当于Node上的一个“小管家”。</p>
 <p>kube-proxy的作用有点特别，它是Node的网络代理，只负责管理容器的网络通信，简单来说就是为Pod转发TCP&#x2F;UDP数据包，相当于是专职的“小邮差”。</p>
 <p>container-runtime，它是容器和镜像的实际使用者，在kubelet的指挥下创建容器，管理Pod的生命周期，是真正干活的苦力。</p>
@@ -211,7 +515,7 @@
 <p>使用minikube ssh登录节点后，可以使用docker ps查看kube-proxy：</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube ssh</span><br><span class="line">docker ps | grep kube-proxy</span><br></pre></td></tr></table></figure>
 
-<p><img src="/source/load_images/k8s_2_4.jpeg" alt="image"></p>
+<p><img src="/source/load_images/k8s/2/k8s_2_4.jpeg" alt="image"></p>
 <p>而kubelet用docker ps是找不到的，需要用操作系统的ps命令：</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">ps -ef | grep kubelet</span><br></pre></td></tr></table></figure>
 
@@ -224,21 +528,21 @@
 <li>scheduler通过apiserver得到当前节点的状态，调度Pod，然后apiserver下发命令个Node的kubelet，kubelet调用container-runtime启动容器。</li>
 <li>controller-manager也通过apiserver得到实时的节点状态，监控可能得异常情况，再使用相应的手段去调节恢复。</li>
 </ul>
-<p><img src="/load_images/k8s_2_5.png" alt="k8s_2_5"></p>
+<p><img src="/load_images/k8s/2/k8s_2_5.png" alt="k8s_2_5"></p>
 <h4 id="插件（Addons）有哪些"><a href="#插件（Addons）有哪些" class="headerlink" title="插件（Addons）有哪些"></a>插件（Addons）有哪些</h4><p>只要服务器节点上运行了apiserver、scheduler、kubelet、kube-proxy、container-runtime等组件，就可以说是一个功能齐全的Kubernetes集群了。</p>
 <p>由于Kubernetes本身设计的非常灵活，所以就有大量的插件用来扩展、增强它对应用和集群的管理能力。</p>
 <p>minikube也支持很多插件，使用命令minikube addons list就可以查看插件列表：</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube addons list</span><br></pre></td></tr></table></figure>
 
-<img src="/load_images/k8s_2_6.png" alt="image" style="zoom:50%;" />
+<img src="/load_images/k8s/2/k8s_2_6.png" alt="image" style="zoom:50%;" />
 
 <p>有比较重要的两个插件DNS和Dashboard。</p>
 <p>DNS在Kubernetes集群里实现了域名解析服务，能够让我们以域名而不是IP地址的方式来互相通信，是服务发现和负载均衡的基础。由于它对微服务、服务网格等架构至关重要，所以基本上是Kubernetes的必备插件。</p>
 <p>Dashboard仪表盘，为Kubernetes提供了一个图形化的操作界面。</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">minikube dashboard</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">可以在默认浏览器打开Dashboard页面，而且还支持中文</span></span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_2_7.png" alt="k8s_2_7"></p>
-<h3 id="思维导图"><a href="#思维导图" class="headerlink" title="思维导图"></a>思维导图</h3><img src="/load_images/k8s_2_8.png" alt="image"  />
+<p><img src="/load_images/k8s/2/k8s_2_7.png" alt="k8s_2_7"></p>
+<h3 id="思维导图"><a href="#思维导图" class="headerlink" title="思维导图"></a>思维导图</h3><img src="/load_images/k8s/2/k8s_2_8.png" alt="image"  />
 
 
 
@@ -281,7 +585,7 @@
 
 
 <p>所以，在minikube环境里，会用到两个客户端：minikube管理Kubernets集群环境，kubectl操作实际的kubernetes功能，和Docker比起来有点复杂。</p>
-<img src="/load_images/k8s_1_1.png" alt="image-20221105013324401" style="zoom:50%;" />
+<img src="/load_images/k8s/1/k8s_1_1.png" alt="image-20221105013324401" style="zoom:50%;" />
 
 
 
@@ -292,17 +596,16 @@
 
 <p>可以看到，Kubernetes集群里现在只有一个节点，名字就叫：minikube，类型是Control Plane，里面有三个服务：host、kubelet、apiserver；IP地址是192.168.49.2。</p>
 <p>可以使用命令minikube ssh登录到这个节点：</p>
-<p><img src="/load_images/k8s_1_2.png" alt="image-20221107102226838"></p>
+<p><img src="/load_images/k8s/1/k8s_1_2.png" alt="image"></p>
 <h4 id="kubectl命令"><a href="#kubectl命令" class="headerlink" title="kubectl命令"></a>kubectl命令</h4><p>使用minikube自带的kubectl有一点形式上的限制，要在前面加上minikube前缀，后面再有个–，例如：</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl version #这条命令还不能直接用，要用下面这种写法</span><br><span class="line">minikube kubectl -- version</span><br></pre></td></tr></table></figure>
 
 <p>为了避免这个麻烦，使用alias别名功能，写到当前用户目录下的.bashrc：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">alias kubectl=&quot;minikube kubectl --&quot;</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">alias kubectl=&quot;minikube kubectl --&quot;</span><br><span class="line">source &lt;(kubectl completion bash) #kubectl命令补全功能</span><br></pre></td></tr></table></figure>
 
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">source .bashrc</span><br></pre></td></tr></table></figure>
 
-<p>使用kubectl命令补全功能</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">source &lt;(kubectl completion bash)</span><br></pre></td></tr></table></figure>
+
 
 <p>现在就可以使用kubectl了：</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">kubectl version --short</span><br><span class="line"></span><br><span class="line">Client Version: v1.23.3</span><br><span class="line">Server Version: v1.23.3</span><br></pre></td></tr></table></figure>

@@ -27,14 +27,14 @@
 <meta property="og:site_name" content="Coding-Nonfishz">
 <meta property="og:description" content="YAML：Kubernetes世界里的通用语">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://codeman.club/load_images/k8s_3_1.png">
-<meta property="og:image" content="https://codeman.club/load_images/k8s_3_2.png">
-<meta property="og:image" content="https://codeman.club/load_images/k8s_3_3.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s/3/k8s_3_1.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s/3/k8s_3_2.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s/3/k8s_3_3.png">
 <meta property="article:published_time" content="2022-11-07T07:36:23.000Z">
-<meta property="article:modified_time" content="2022-11-08T02:42:57.591Z">
+<meta property="article:modified_time" content="2022-11-10T14:52:00.399Z">
 <meta property="article:author" content="Nonfishz">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://codeman.club/load_images/k8s_3_1.png">
+<meta name="twitter:image" content="https://codeman.club/load_images/k8s/3/k8s_3_1.png">
 
 <link rel="canonical" href="https://codeman.club/k8s/yaml/">
 
@@ -229,7 +229,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-11-08 10:42:57" itemprop="dateModified" datetime="2022-11-08T10:42:57+08:00">2022-11-08</time>
+                <time title="修改时间：2022-11-10 22:52:00" itemprop="dateModified" datetime="2022-11-10T22:52:00+08:00">2022-11-10</time>
               </span>
 
           <br>
@@ -270,12 +270,12 @@
 <p>都有哪些API对象呢？</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">查看当前Kubernetes版本支持的所有对象</span></span><br><span class="line">kubectl api-resources </span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_3_1.png" alt="image"></p>
+<p><img src="/load_images/k8s/3/k8s_3_1.png" alt="image"></p>
 <p>NAME一栏，就是对象的名字。SHORTNAMES是简写，在使用kubectl命令的时候可以使用</p>
 <p>在使用kubectl命令的时候，可以加上一个参数–v&#x3D;9，它会显示出详细的命令执行过程，清楚地看到发出的HTTP请求</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get pod --v=9</span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_3_2.png" alt="image"></p>
+<p><img src="/load_images/k8s/3/k8s_3_2.png" alt="image"></p>
 <p>从图中可以看到，kubectl客户端等价于调用了curl，向8443端口发送了HTTP GET请求，URL是&#x2F;api&#x2F;v1&#x2F;namespaces&#x2F;default&#x2F;pods。</p>
 <p>这些API对象，全面地描述了集群的节点、应用、配置、服务、账号等等信息，apiserver会把它们都存储在数据库etcd里，然后kubelet、scheduler、controller-manager等组件通过apiserver来操作它们，就在API对象这个抽象层次实现了对整个集群的管理。</p>
 <h3 id="如何描述API对象"><a href="#如何描述API对象" class="headerlink" title="如何描述API对象"></a>如何描述API对象</h3><p>以YAML语言，使用“声明式”在Kubernetes里描述并创建API对象。</p>
@@ -306,13 +306,13 @@
 
 <p>Kubernetes收到这份“声明式”的数据，再根据HTTP请求里的POST&#x2F;DELETE等方法，就会自动操作这个资源对象，至于对象在哪个节点上、怎么创建、怎么删除完全不用我们操心。</p>
 <h3 id="如何编写YAML"><a href="#如何编写YAML" class="headerlink" title="如何编写YAML"></a>如何编写YAML</h3><p><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/reference/kubernetes-api/">官方文档</a> API对象的所有字段都可以在里面找到。</p>
-<p>第一个技巧，kubectl api-resources命令，会显示出资源对象响应的API版本和类型。</p>
-<p>第二个技巧，kubectl explain，相当于Kubernetes自带的API文档，会给出对象字段的详细说明，这样就不必去网上查找了。</p>
+<h4 id="第一个技巧"><a href="#第一个技巧" class="headerlink" title="第一个技巧"></a>第一个技巧</h4><p>kubectl api-resources命令，会显示出资源对象响应的API版本和类型。</p>
+<h4 id="第二个技巧"><a href="#第二个技巧" class="headerlink" title="第二个技巧"></a>第二个技巧</h4><p>kubectl explain，相当于Kubernetes自带的API文档，会给出对象字段的详细说明，这样就不必去网上查找了。</p>
 <p>比如想看Pod里的字段该怎么写：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">kubectl explain pod</span><br><span class="line">kubectl explain pod.metadata</span><br><span class="line">kubectl explain pod.spec</span><br><span class="line">kubectl explain pod.spec.containers</span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_3_3.png" alt="image"></p>
-<p>第三个技巧，kubectl两个特殊的参数 –dry-run&#x3D;client和-o yaml，前者是空运行，后者是生成YAML格式，结合起来使用就会让kubectl不会有实际的创建动作，而只生成YAML文件。</p>
+<p><img src="/load_images/k8s/3/k8s_3_3.png" alt="image"></p>
+<h4 id="第三个技巧"><a href="#第三个技巧" class="headerlink" title="第三个技巧"></a>第三个技巧</h4><p>kubectl两个特殊的参数 –dry-run&#x3D;client和-o yaml，前者是空运行，后者是生成YAML格式，结合起来使用就会让kubectl不会有实际的创建动作，而只生成YAML文件。</p>
 <p>例如，生成一个Pod的YAML样板示例：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl run ngx --image=nginx:alpine --dry-run=client -o yaml</span><br><span class="line">#注：以上命令只会在终端输出yaml内容，如果需要生成文件，需要重定向到文件中 &gt;&gt; filename.yml</span><br></pre></td></tr></table></figure>
 
@@ -354,8 +354,8 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/k8s/core/" rel="prev" title="Kubernetes系列（二）—— 工作机制">
-      <i class="fa fa-chevron-left"></i> Kubernetes系列（二）—— 工作机制
+    <a href="/k8s/core/" rel="prev" title="Kubernetes(二) —— 工作机制">
+      <i class="fa fa-chevron-left"></i> Kubernetes(二) —— 工作机制
     </a></div>
       <div class="post-nav-item">
     <a href="/k8s/pod/" rel="next" title="Kubernetes系列（四）—— Pod">
@@ -419,7 +419,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#YAML%EF%BC%9AKubernetes%E4%B8%96%E7%95%8C%E9%87%8C%E7%9A%84%E9%80%9A%E7%94%A8%E8%AF%AD"><span class="nav-number">1.</span> <span class="nav-text">YAML：Kubernetes世界里的通用语</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A3%B0%E6%98%8E%E5%BC%8F%E4%B8%8E%E5%91%BD%E4%BB%A4%E5%BC%8F"><span class="nav-number">1.1.</span> <span class="nav-text">声明式与命令式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFYAML"><span class="nav-number">1.2.</span> <span class="nav-text">什么是YAML</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFAPI%E5%AF%B9%E8%B1%A1"><span class="nav-number">1.3.</span> <span class="nav-text">什么是API对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E6%8F%8F%E8%BF%B0API%E5%AF%B9%E8%B1%A1"><span class="nav-number">1.4.</span> <span class="nav-text">如何描述API对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E7%BC%96%E5%86%99YAML"><span class="nav-number">1.5.</span> <span class="nav-text">如何编写YAML</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#YAML%EF%BC%9AKubernetes%E4%B8%96%E7%95%8C%E9%87%8C%E7%9A%84%E9%80%9A%E7%94%A8%E8%AF%AD"><span class="nav-number">1.</span> <span class="nav-text">YAML：Kubernetes世界里的通用语</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A3%B0%E6%98%8E%E5%BC%8F%E4%B8%8E%E5%91%BD%E4%BB%A4%E5%BC%8F"><span class="nav-number">1.1.</span> <span class="nav-text">声明式与命令式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFYAML"><span class="nav-number">1.2.</span> <span class="nav-text">什么是YAML</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFAPI%E5%AF%B9%E8%B1%A1"><span class="nav-number">1.3.</span> <span class="nav-text">什么是API对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E6%8F%8F%E8%BF%B0API%E5%AF%B9%E8%B1%A1"><span class="nav-number">1.4.</span> <span class="nav-text">如何描述API对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E7%BC%96%E5%86%99YAML"><span class="nav-number">1.5.</span> <span class="nav-text">如何编写YAML</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E4%B8%AA%E6%8A%80%E5%B7%A7"><span class="nav-number">1.5.1.</span> <span class="nav-text">第一个技巧</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E4%B8%AA%E6%8A%80%E5%B7%A7"><span class="nav-number">1.5.2.</span> <span class="nav-text">第二个技巧</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E4%B8%AA%E6%8A%80%E5%B7%A7"><span class="nav-number">1.5.3.</span> <span class="nav-text">第三个技巧</span></a></li></ol></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -435,7 +435,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-count">24</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -493,13 +493,13 @@
       <i class="fa fa-chart-area"></i>
     </span>
       <span class="post-meta-item-text">站点总字数：</span>
-    <span title="站点总字数">78k</span>
+    <span title="站点总字数">91k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
       <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
-    <span title="站点阅读时长">1:11</span>
+    <span title="站点阅读时长">1:23</span>
 </div>
 <!--
   <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动

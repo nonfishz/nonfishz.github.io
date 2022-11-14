@@ -27,19 +27,19 @@
 <meta property="og:site_name" content="Coding-Nonfishz">
 <meta property="og:description" content="Pod：Kubernetes最核心的概念">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://codeman.club/load_images/k8s_4_1.png">
-<meta property="og:image" content="https://codeman.club/load_images/k8s_4_2.png">
-<meta property="og:image" content="https://codeman.club/load_images/k8s_4_3.png">
-<meta property="og:image" content="https://codeman.club/load_images/k8s_4_4.png">
-<meta property="og:image" content="https://codeman.club/load_images/k8s_4_5.png">
-<meta property="og:image" content="https://codeman.club/load_images/k8s_4_6.png">
-<meta property="og:image" content="https://codeman.club/load_images/k8s_4_7.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s/4/k8s_4_1.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s/4/k8s_4_2.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s/4/k8s_4_3.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s/4/k8s_4_4.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s/4/k8s_4_5.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s/4/k8s_4_6.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s/4/k8s_4_7.png">
 <meta property="article:published_time" content="2022-11-07T14:38:36.000Z">
-<meta property="article:modified_time" content="2022-11-08T04:49:53.870Z">
+<meta property="article:modified_time" content="2022-11-10T14:52:11.657Z">
 <meta property="article:author" content="Nonfishz">
 <meta property="article:tag" content="Kubernetes">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://codeman.club/load_images/k8s_4_1.png">
+<meta name="twitter:image" content="https://codeman.club/load_images/k8s/4/k8s_4_1.png">
 
 <link rel="canonical" href="https://codeman.club/k8s/pod/">
 
@@ -234,7 +234,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-11-08 12:49:53" itemprop="dateModified" datetime="2022-11-08T12:49:53+08:00">2022-11-08</time>
+                <time title="修改时间：2022-11-10 22:52:11" itemprop="dateModified" datetime="2022-11-10T22:52:11+08:00">2022-11-10</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -273,7 +273,7 @@
       
         <h2 id="Pod：Kubernetes最核心的概念"><a href="#Pod：Kubernetes最核心的概念" class="headerlink" title="Pod：Kubernetes最核心的概念"></a>Pod：Kubernetes最核心的概念</h2><span id="more"></span>
 
-<h3 id="为什么要有Pod"><a href="#为什么要有Pod" class="headerlink" title="为什么要有Pod"></a>为什么要有Pod</h3><p><img src="/load_images/k8s_4_1.png" alt="k8s_4_1"></p>
+<h3 id="为什么要有Pod"><a href="#为什么要有Pod" class="headerlink" title="为什么要有Pod"></a>为什么要有Pod</h3><p><img src="/load_images/k8s/4/k8s_4_1.png" alt="k8s_4_1"></p>
 <p>Pod原意是“豌豆荚”，后来又延伸出“舱室”“太空舱”等含义，图片中，形象的来说Pod就是包含了多组件、成员的一种结构。</p>
 <p>容器技术，让进程在一个“沙盒”环境里运行，具有良好的隔离性，对应用时一个非常好的封装。</p>
 <p>不过，当容器技术进入到现实的生产环境中时，这种隔离性就带来了一些麻烦。因为很少有应用时完全独立运行的，经常需要几个进程互相协作才能完成任务。</p>
@@ -283,7 +283,7 @@
 <p>所以，Pod的概念也就呼之欲出了，容器正式“豆荚”里那些小小的“豌豆”，可以在Pod的YAML里看到，“spec.containers”字段其实是一个数组，里面允许定义多个容器。</p>
 <h3 id="为什么Pod是Kubernetes的核心对象"><a href="#为什么Pod是Kubernetes的核心对象" class="headerlink" title="为什么Pod是Kubernetes的核心对象"></a>为什么Pod是Kubernetes的核心对象</h3><p>因为Pod是对容器的“打包”，里面的容器是一个整体，总是能够一起调度、一起运行，绝对不会出现分离的情况，而且Pod属于Kubernetes，可以在不触碰下层容器的情况下任意定制修改。所以有了Pod这个抽象概念，Kubernetes在集群级别上管理应用就会“得心应手”了。</p>
 <p>Kubernetes让Pod去编排处理容器，然后把Pod作为应用调度部署的<strong>最小单位</strong>，Pod也因此成为了Kubernetes世界里的“原子”（当然这个原子内部是有结构的，不是铁板一块），基于Pod就可以构建出更多更复杂的业务形态了。</p>
-<p><img src="/load_images/k8s_4_2.png" alt="k8s_4_2"></p>
+<p><img src="/load_images/k8s/4/k8s_4_2.png" alt="k8s_4_2"></p>
 <p>从图中可以看出，所有的Kubernetes资源都直接或者间接的依附在Pod之上，所有的Kubernetes功能都必须通过Pod来实现，所以Pod理所当然地成为了Kubernetes的核心对象。</p>
 <h3 id="如何用YAML描述Pod"><a href="#如何用YAML描述Pod" class="headerlink" title="如何用YAML描述Pod"></a>如何用YAML描述Pod</h3><p>我们始终可以使用<strong>kubectl explain</strong>来查看任意字段的详细说明。</p>
 <p>Pod是API对象，所以它必然也有apiVersion、kind、metadata、spec这四个基本组成部分。</p>
@@ -323,15 +323,15 @@
 <p>和Docker不一样，Kubernetes的Pod不会在前台运行，只能在后台（相当于默认使用了参数-d），所以输出信息不能直接看到。我们可以用命令kubectl logs，它会把Pod的标准输出流信息展示给我们看，在这里就会显示出预设的两个环境变量值：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl logs busy-pod</span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_4_3.png" alt="image"></p>
+<p><img src="/load_images/k8s/4/k8s_4_3.png" alt="image"></p>
 <p>查看Pod列表和运行状态</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl get pod</span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_4_4.png" alt="image"></p>
+<p><img src="/load_images/k8s/4/k8s_4_4.png" alt="image"></p>
 <p>从图片中发现这个Pod运行有点不正常，状态是“CrashLoopBackOff”，那么可以使用命令kubectl describe来检查它的详细状态，在调试排错时很有用：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl describe pod busy-pod</span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_4_5.png" alt="image"></p>
+<p><img src="/load_images/k8s/4/k8s_4_5.png" alt="image"></p>
 <p>通常只需要关注末尾的“Events”部分，它显示的是Pod运行过程中的一些关键节点事件。</p>
 <p>对于这个busy-pod，因为它只执行了一条echo命令就退出了，而Kubernetes默认会重启Pod，所以就会进入一个反复停止 - 启动的循环错误状态。</p>
 <p>Kubernetes里运行的应用大部分都是不会主动退出的服务，我们可以把这个busy-pod删掉，创建一个ngx-pod.yml，启动一个Nginx服务，这才是大多数Pod的工作方式。</p>
@@ -339,7 +339,7 @@
 
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f ngx-pod.yml</span><br><span class="line"></span><br><span class="line">kubectl get pod #可以看到ngix-pod处于Running状态</span><br><span class="line"></span><br><span class="line">kubectl log ngx-pod #可以查看Nginx的运行日志</span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_4_6.png" alt="image"></p>
+<p><img src="/load_images/k8s/4/k8s_4_6.png" alt="image"></p>
 <p>kubectl cp 可以把本地文件拷贝进Pod</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">echo &quot;Hello Pod&quot; &gt;&gt; tmp.txt</span><br><span class="line">kubectl cp tmp.txt ngx-pod:/tmp</span><br></pre></td></tr></table></figure>
 
@@ -348,7 +348,7 @@
 <p>kubectl exec进入Pod内部执行Shell命令，需要再Pod后面加上–，把kubectl的命令和Shell命令分隔开</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl exec -it ngx-pod -- sh</span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_4_7.png" alt="image"></p>
+<p><img src="/load_images/k8s/4/k8s_4_7.png" alt="image"></p>
 <p>虽然Pod是Kubernetes的核心概念，非常重要，但事实上在Kubernetes里通常并不会直接创建Pod，因为它支队容器做了简单的包装，比较脆弱，离复杂的业务需求还有些距离，需要Job、CronJob、Deployment等其他对象增添更多的功能才能投入生产使用。</p>
 <p>Pod内部有一个名为infra的容器，它实际上代表了Pod，维护着Pod内多容器共享的主机名、网络和存储。infra容器的镜像叫“pause”，非常小，只有不到500KB。</p>
 <p>metadata里的标签不能任意写，必须要符合域名规范（FQDN）。</p>
@@ -393,7 +393,10 @@
     <a href="/k8s/yaml/" rel="prev" title="Kubernetes系列（三）—— YAML">
       <i class="fa fa-chevron-left"></i> Kubernetes系列（三）—— YAML
     </a></div>
-      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/k8s/job_cronjob/" rel="next" title="Kubernetes系列（五）—— Job/CronJob">
+      Kubernetes系列（五）—— Job/CronJob <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
       </footer>
     
@@ -468,7 +471,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-count">24</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -526,13 +529,13 @@
       <i class="fa fa-chart-area"></i>
     </span>
       <span class="post-meta-item-text">站点总字数：</span>
-    <span title="站点总字数">78k</span>
+    <span title="站点总字数">91k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
       <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
-    <span title="站点阅读时长">1:11</span>
+    <span title="站点阅读时长">1:23</span>
 </div>
 <!--
   <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动

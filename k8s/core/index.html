@@ -22,25 +22,25 @@
 
   <meta name="description" content="Kubernetes工作机制">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Kubernetes系列（二）—— 工作机制">
+<meta property="og:title" content="Kubernetes(二) —— 工作机制">
 <meta property="og:url" content="https://codeman.club/k8s/core/index.html">
 <meta property="og:site_name" content="Coding-Nonfishz">
 <meta property="og:description" content="Kubernetes工作机制">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://codeman.club/load_images/k8s_2_1.png">
-<meta property="og:image" content="https://codeman.club/load_images/k8s_2_2.png">
-<meta property="og:image" content="https://codeman.club/source/load_images/k8s_2_3.jpeg">
-<meta property="og:image" content="https://codeman.club/source/load_images/k8s_2_4.jpeg">
-<meta property="og:image" content="https://codeman.club/load_images/k8s_2_5.png">
-<meta property="og:image" content="https://codeman.club/load_images/k8s_2_6.png">
-<meta property="og:image" content="https://codeman.club/load_images/k8s_2_7.png">
-<meta property="og:image" content="https://codeman.club/load_images/k8s_2_8.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s/2/k8s_2_1.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s/2/k8s_2_2.png">
+<meta property="og:image" content="https://codeman.club/source/load_images/k8s/2/k8s_2_3.jpeg">
+<meta property="og:image" content="https://codeman.club/source/load_images/k8s/2/k8s_2_4.jpeg">
+<meta property="og:image" content="https://codeman.club/load_images/k8s/2/k8s_2_5.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s/2/k8s_2_6.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s/2/k8s_2_7.png">
+<meta property="og:image" content="https://codeman.club/load_images/k8s/2/k8s_2_8.png">
 <meta property="article:published_time" content="2022-11-07T02:53:05.000Z">
-<meta property="article:modified_time" content="2022-11-07T14:38:56.264Z">
+<meta property="article:modified_time" content="2022-11-10T14:51:40.237Z">
 <meta property="article:author" content="Nonfishz">
 <meta property="article:tag" content="Kubernetes">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://codeman.club/load_images/k8s_2_1.png">
+<meta name="twitter:image" content="https://codeman.club/load_images/k8s/2/k8s_2_1.png">
 
 <link rel="canonical" href="https://codeman.club/k8s/core/">
 
@@ -55,7 +55,7 @@
   };
 </script>
 
-  <title>Kubernetes系列（二）—— 工作机制 | Coding-Nonfishz</title>
+  <title>Kubernetes(二) —— 工作机制 | Coding-Nonfishz</title>
   
 
 
@@ -217,7 +217,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Kubernetes系列（二）—— 工作机制
+          Kubernetes(二) —— 工作机制
         </h1>
 
         <div class="post-meta">
@@ -227,10 +227,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2022-11-07 10:53:05 / 修改时间：22:38:56" itemprop="dateCreated datePublished" datetime="2022-11-07T10:53:05+08:00">2022-11-07</time>
+              <time title="创建时间：2022-11-07 10:53:05" itemprop="dateCreated datePublished" datetime="2022-11-07T10:53:05+08:00">2022-11-07</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-11-10 22:51:40" itemprop="dateModified" datetime="2022-11-10T22:51:40+08:00">2022-11-10</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -268,7 +274,7 @@
       
         <h2 id="Kubernetes工作机制"><a href="#Kubernetes工作机制" class="headerlink" title="Kubernetes工作机制"></a>Kubernetes工作机制</h2><span id="more"></span>
 
-<h3 id="Kubernetes基本架构图"><a href="#Kubernetes基本架构图" class="headerlink" title="Kubernetes基本架构图"></a>Kubernetes基本架构图</h3><p><img src="/load_images/k8s_2_1.png" alt="image"></p>
+<h3 id="Kubernetes基本架构图"><a href="#Kubernetes基本架构图" class="headerlink" title="Kubernetes基本架构图"></a>Kubernetes基本架构图</h3><p><img src="/load_images/k8s/2/k8s_2_1.png" alt="image"></p>
 <p>Kubernetes采用了现在流行的”控制面&#x2F;数据面“（Control Plane &#x2F; Data Plane）架构，集群里的计算机被称为”节点“（Node），可以是实机也可以是虚机，少量的节点用作控制面来执行集群的管理维护工作，其他的大部分节点都被划归数据面，用来跑业务应用。</p>
 <p>控制面节点在Kubernetes中叫做Master Node，一般简称为Master，它是整个集群里最重要的部分，可以说是Kubernetes的大脑和心脏。</p>
 <p>数据面的节点叫做Worker Node，一般旧简称为Worker或者Node，相当于Kubernetes的手和脚，在Master的指挥下干活。</p>
@@ -282,7 +288,7 @@
 <p>组件实现了Kubernetes的核心功能特性，没有这些组件Kubernetes就无法启动。</p>
 <p>插件是Kubernetes的一些附加功能，属于“锦上添花”，不安装也不影响Kubernetes的正常运行。</p>
 <h4 id="Master里的组件有哪些"><a href="#Master里的组件有哪些" class="headerlink" title="Master里的组件有哪些"></a>Master里的组件有哪些</h4><p>Master里有4个组件，分别是apiserver、etcd、scheduler、controller-manager。</p>
-<p><img src="/load_images/k8s_2_2.png" alt="image"></p>
+<p><img src="/load_images/k8s/2/k8s_2_2.png" alt="image"></p>
 <p>apiserver是Master节点，同时也是整个Kubernetes系统的唯一入口，它对外公开了一系列的RESTful API，并且加上了验证、授权等功能，所有其他组件都只能和它直接通信，可以说是Kubernetes里的联络员。</p>
 <p>etcd是一个高可用的分布式key-value数据库，用来持久化存储系统里的各种资源对象和状态，相当于Kubernetes里的配置管理员。注意它只与apiserver有直接联系，也就是说任何组件想要读写etcd里的数据都必须经过apiserver。</p>
 <p>scheduler负责容器的编排工作，检查节点的资源状态，把Pod调度到最合适的节点上运行，相当于部署人员。因为节点状态和Pod信息都存储在etcd里，所以scheduker必须通过apiserver才能获得。</p>
@@ -293,7 +299,7 @@
 <p>注意-n kube-system参数，表示检查kube-system名字空间里的Pod。</p>
 <h4 id="Node里的组件"><a href="#Node里的组件" class="headerlink" title="Node里的组件"></a>Node里的组件</h4><p>Master里的apiserver、scheduler等组件需要获取节点的各种信息才能够做出管理决策，那这些信息该怎么来呢？</p>
 <p>这就需要Node里的3个组件，kubulet、kube-proxy、container-runtime。</p>
-<p><img src="/source/load_images/k8s_2_3.jpeg" alt="k8s_2_3"></p>
+<p><img src="/source/load_images/k8s/2/k8s_2_3.jpeg" alt="k8s_2_3"></p>
 <p>kubelet是Node的代理，负责管理Node相关的绝大部分操作，Node上只有它能够与apiserver通信，实现状态报告、命令下发、启停容器等功能，相当于Node上的一个“小管家”。</p>
 <p>kube-proxy的作用有点特别，它是Node的网络代理，只负责管理容器的网络通信，简单来说就是为Pod转发TCP&#x2F;UDP数据包，相当于是专职的“小邮差”。</p>
 <p>container-runtime，它是容器和镜像的实际使用者，在kubelet的指挥下创建容器，管理Pod的生命周期，是真正干活的苦力。</p>
@@ -302,7 +308,7 @@
 <p>使用minikube ssh登录节点后，可以使用docker ps查看kube-proxy：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">minikube ssh</span><br><span class="line">docker ps | grep kube-proxy</span><br></pre></td></tr></table></figure>
 
-<p><img src="/source/load_images/k8s_2_4.jpeg" alt="image"></p>
+<p><img src="/source/load_images/k8s/2/k8s_2_4.jpeg" alt="image"></p>
 <p>而kubelet用docker ps是找不到的，需要用操作系统的ps命令：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ps -ef | grep kubelet</span><br></pre></td></tr></table></figure>
 
@@ -315,21 +321,21 @@
 <li>scheduler通过apiserver得到当前节点的状态，调度Pod，然后apiserver下发命令个Node的kubelet，kubelet调用container-runtime启动容器。</li>
 <li>controller-manager也通过apiserver得到实时的节点状态，监控可能得异常情况，再使用相应的手段去调节恢复。</li>
 </ul>
-<p><img src="/load_images/k8s_2_5.png" alt="k8s_2_5"></p>
+<p><img src="/load_images/k8s/2/k8s_2_5.png" alt="k8s_2_5"></p>
 <h4 id="插件（Addons）有哪些"><a href="#插件（Addons）有哪些" class="headerlink" title="插件（Addons）有哪些"></a>插件（Addons）有哪些</h4><p>只要服务器节点上运行了apiserver、scheduler、kubelet、kube-proxy、container-runtime等组件，就可以说是一个功能齐全的Kubernetes集群了。</p>
 <p>由于Kubernetes本身设计的非常灵活，所以就有大量的插件用来扩展、增强它对应用和集群的管理能力。</p>
 <p>minikube也支持很多插件，使用命令minikube addons list就可以查看插件列表：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">minikube addons list</span><br></pre></td></tr></table></figure>
 
-<img src="/load_images/k8s_2_6.png" alt="image" style="zoom:50%;" />
+<img src="/load_images/k8s/2/k8s_2_6.png" alt="image" style="zoom:50%;" />
 
 <p>有比较重要的两个插件DNS和Dashboard。</p>
 <p>DNS在Kubernetes集群里实现了域名解析服务，能够让我们以域名而不是IP地址的方式来互相通信，是服务发现和负载均衡的基础。由于它对微服务、服务网格等架构至关重要，所以基本上是Kubernetes的必备插件。</p>
 <p>Dashboard仪表盘，为Kubernetes提供了一个图形化的操作界面。</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">minikube dashboard</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">可以在默认浏览器打开Dashboard页面，而且还支持中文</span></span><br></pre></td></tr></table></figure>
 
-<p><img src="/load_images/k8s_2_7.png" alt="k8s_2_7"></p>
-<h3 id="思维导图"><a href="#思维导图" class="headerlink" title="思维导图"></a>思维导图</h3><img src="/load_images/k8s_2_8.png" alt="image"  />
+<p><img src="/load_images/k8s/2/k8s_2_7.png" alt="k8s_2_7"></p>
+<h3 id="思维导图"><a href="#思维导图" class="headerlink" title="思维导图"></a>思维导图</h3><img src="/load_images/k8s/2/k8s_2_8.png" alt="image"  />
 
 
 
@@ -351,7 +357,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://codeman.club/k8s/core/" title="Kubernetes系列（二）—— 工作机制">https://codeman.club/k8s/core/</a>
+    <a href="https://codeman.club/k8s/core/" title="Kubernetes(二) —— 工作机制">https://codeman.club/k8s/core/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -452,7 +458,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">21</span>
+          <span class="site-state-item-count">24</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -510,13 +516,13 @@
       <i class="fa fa-chart-area"></i>
     </span>
       <span class="post-meta-item-text">站点总字数：</span>
-    <span title="站点总字数">78k</span>
+    <span title="站点总字数">91k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
       <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
-    <span title="站点阅读时长">1:11</span>
+    <span title="站点阅读时长">1:23</span>
 </div>
 <!--
   <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
